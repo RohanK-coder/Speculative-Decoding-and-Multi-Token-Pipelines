@@ -302,20 +302,6 @@ Use the plotting scripts or notebooks described below.
 
 ---
 
-## 8. Why Some Plots Are Not Included as “Measured Results”
-
-A few plots used in the presentation are **illustrative / representative trend plots**, not large-scale measured benchmark results.
-
-This was done for practical reasons:
-
-1. **Hardware limits**  
-   Running every model family and every configuration sweep locally was not always feasible on the available laptop hardware.
-
-2. **Model-access constraints**  
-   Some larger models require additional memory, longer runtime, or Hugging Face gated access.
-
-3. **Presentation clarity**  
-   A small number of figures were used to communicate expected system behavior cleanly when exhaustive benchmarking was not possible.
 
 ### Important note for reproducibility
 
@@ -378,7 +364,7 @@ outputs/plots/slowdown_combined_realistic.png
 
 ---
 
-## 10. Recommended Plot Set
+## 9. Recommended Plot Set
 
 For this project, the most useful plots are:
 
@@ -406,7 +392,7 @@ For this project, the most useful plots are:
 
 ---
 
-## 11. Suggested Reproduction Commands
+## 10. Suggested Reproduction Commands
 
 ### Baseline sanity check
 
@@ -452,7 +438,7 @@ python specupipe/experiments/run_grid.py
 
 ---
 
-## 12. Expected Findings
+## 11. Expected Findings
 
 Across the project, the main expected conclusions are:
 
@@ -470,7 +456,7 @@ In one sentence:
 
 ---
 
-## 13. Limitations
+## 12. Limitations
 
 - Some larger model families require more memory than a typical laptop provides.
 - Gated models may require authentication.
@@ -479,7 +465,7 @@ In one sentence:
 
 ---
 
-## 14. Future Work
+## 13. Future Work
 
 - cycle-accurate architectural simulation,
 - hardware-assisted rollback,
@@ -490,7 +476,7 @@ In one sentence:
 
 ---
 
-## 15. References / Starting Points
+## 14. References / Starting Points
 
 Useful public references mentioned in the project:
 
@@ -512,7 +498,7 @@ These are useful for:
 
 ---
 
-## 16. Quick Start
+## 15. Quick Start
 
 If you only want to see the project working quickly:
 
@@ -533,7 +519,7 @@ Then:
 
 ---
 
-## 17. Reproducibility Statement
+## 16. Reproducibility Statement
 
 This repository is designed to be **functionally reproducible**:
 
@@ -546,7 +532,9 @@ Where presentation plots are illustrative rather than fully measured, that fact 
 
 ---
 
-## 18. License / Academic Note
+## 17. Authors
 
-This project is intended for educational and research use. If you use figures, ideas, or results from external work, cite the original sources properly.
+Yanni Rohan Kommathoti
+Nikhil Peravali
+Rajiv Sai Charan Tirumalasetti
 
