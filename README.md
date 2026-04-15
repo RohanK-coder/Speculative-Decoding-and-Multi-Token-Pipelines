@@ -1,302 +1,552 @@
-# SpecuPipe: Streaming Speculative Decoding Playground
+# Speculative Decoding and Multi-Token Pipelines
 
+A software prototype and architecture study of **speculative decoding** for large language model inference, built for **CECS 530 / Advanced Computer Architecture**.
 
-It compares:
+This project treats speculative decoding as more than a text-generation trick. It studies the problem as a **pipeline, control, and memory-system design problem**:
 
-- **Baseline greedy decoding** (target model only),
-- **Speculative decoding** (draft + target verification),
-- and an optional **naive multi-token method** (fast but can drift from baseline output).
-
-The project includes a live Streamlit dashboard, reproducible experiment scripts, correctness checks, and plotting/export utilities.
-
----
-
-## Why this project
-
-Autoregressive decoding is often latency-bound because each token must be generated sequentially.
-Speculative decoding addresses this by:
-
-1. letting a draft model propose multiple tokens,
-2. verifying them with the target model,
-3. committing accepted tokens and rolling back rejected ones.
-
-This project helps you study the trade-off between **speed**, **acceptance rate**, **rollback overhead**, and **output correctness**.
+- How do we break the one-token-at-a-time barrier of autoregressive decoding?
+- When does speculation actually outperform baseline decoding?
+- What do **acceptance rate, speculation depth, verification cost, rollback, backpressure, and KV-cache management** do to end-to-end speed?
+- How can **adaptive** and **hybrid** control policies make speculative decoding more robust?
 
 ---
 
-## Core Features
+## 1. Project Summary
 
-- Baseline target-model greedy generation
-- Speculative decoding with:
-  - configurable depth `k`
-  - adaptive depth mode
-  - hybrid gating mode
-  - category-aware policy mode in grid experiments
-- Acceptance/rejection and rollback accounting
-- Logical KV-cache state tracking and history
-- Rich per-run metrics:
-  - speedup, tokens/sec, acceptance rate
-  - rollbacks, wasted draft tokens, bottleneck/utilization proxies
-  - energy and KV-overhead proxy metrics
-- Streamlit live decode dashboard
-- Batch experiment pipelines + CSV/JSON outputs + plots
-- Correctness validation against baseline output
+In baseline autoregressive decoding, the target model generates **one token at a time**, so latency scales with output length and target-model cost.
+
+In speculative decoding, a **smaller draft model** proposes a block of future tokens and a **larger target model** verifies that block. The system then:
+
+1. commits the **longest accepted prefix**,
+2. rolls back the rejected suffix,
+3. appends a corrective target token if needed,
+4. and repeats until generation finishes.
+
+This repository studies that process from three perspectives:
+
+- **Algorithmic correctness** – only verified tokens are committed.
+- **Pipeline architecture** – draft, verify, commit, and rollback stages interact like a multi-token pipeline.
+- **Systems tradeoffs** – speedup depends on acceptance rate, draft/target cost ratio, speculative KV-cache overhead, and control-policy quality.
 
 ---
 
-## Repository Structure
+## 2. Main Contributions
+
+This project includes:
+
+- a **baseline greedy decoder** for reference,
+- a **speculative decoder** with configurable speculation depth `k`,
+- **rollback-safe state handling**,
+- **KV-cache consistency modeling**,
+- multiple control policies:
+  - fixed,
+  - adaptive,
+  - hybrid-gated,
+  - category-aware,
+- a **web dashboard / app** for interactive runs,
+- experiment scripts and plot generation code,
+- analytical and empirical views of:
+  - speedup,
+  - acceptance rate,
+  - verification bottlenecks,
+  - stall rounds,
+  - backpressure,
+  - wasted draft work,
+  - energy/memory tradeoffs.
+
+---
+
+## 3. Repository Layout
+
+> The exact file names below match the working project structure used during development. If your local clone differs slightly, adjust the paths accordingly.
 
 ```text
 specupipe/
-  app.py                         # Streamlit dashboard
-  core/
-    baseline.py                  # Baseline greedy decode
-    speculative.py               # Speculative algorithm
-    streaming_decode.py          # Token-by-token streaming generators
-    naive_multitoken.py          # Naive draft-only comparator
-    models.py                    # HF model/tokenizer wrapper
-    cache.py                     # KV-cache manager + history
-    metrics.py                   # Step and aggregate metric containers
-    prompting.py                 # Family-specific prompt formatting
-    analysis.py                  # Speedup and metric helpers
-    utils.py                     # Device helpers and utilities
-  experiments/
-    run_single.py
-    run_grid.py
-    compare_algorithms.py
-    compare_model_families.py
-    validate_correctness.py
-    plot_results.py
-    export_best_configs.py
-  tests/
-    test_equivalence.py
-    test_cache.py
-  outputs/
-    results/
-    plots/
-  requirements.txt
+├── app.py
+├── core/
+│   ├── models.py
+│   ├── prompting.py
+│   ├── streaming_decode.py
+│   └── ...
+├── experiments/
+│   ├── run_grid.py
+│   ├── compare_model_families.py
+│   └── ...
+├── outputs/
+│   ├── plots/
+│   ├── csv/
+│   └── logs/
+├── requirements.txt
+└── README.md
+```
+
+### Important files
+
+- `specupipe/app.py`  
+  Streamlit interface for baseline vs speculative decoding, live metrics, and interactive demos.
+
+- `specupipe/core/models.py`  
+  Model and tokenizer loading, forward calls, and helper wrappers.
+
+- `specupipe/core/prompting.py`  
+  Prompt formatting per model family.
+
+- `specupipe/core/streaming_decode.py`  
+  Streaming baseline/speculative decode logic and runtime metric emission.
+
+- `specupipe/experiments/run_grid.py`  
+  Batch experiment runner for parameter sweeps.
+
+- `specupipe/experiments/compare_model_families.py`  
+  Compare model families under the same decoding settings.
+
+---
+
+## 4. Supported Model Families
+
+The project was configured around the following model families:
+
+```python
+MODEL_FAMILIES = {
+    "gpt2": {
+        "draft": "distilgpt2",
+        "target": "gpt2",
+        "label": "GPT-2 family",
+        "recommended_k": 3,
+        "recommended_tokens": 32,
+        "recommended_mode": "hybrid",
+    },
+    "tinyllama": {
+        "draft": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
+        "target": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
+        "label": "TinyLlama (LLaMA-family)",
+        "recommended_k": 2,
+        "recommended_tokens": 48,
+        "recommended_mode": "hybrid",
+    },
+    "qwen": {
+        "draft": "Qwen/Qwen2.5-1.5B-Instruct",
+        "target": "Qwen/Qwen2.5-1.5B-Instruct",
+        "label": "Qwen2.5-1.5B-Instruct",
+        "recommended_k": 2,
+        "recommended_tokens": 48,
+        "recommended_mode": "hybrid",
+    },
+    "smollm2": {
+        "draft": "HuggingFaceTB/SmolLM2-360M-Instruct",
+        "target": "HuggingFaceTB/SmolLM2-1.7B-Instruct",
+        "label": "SmolLM2 Draft/Target",
+        "recommended_k": 3,
+        "recommended_tokens": 32,
+        "recommended_mode": "hybrid",
+    },
+    "llama32": {
+        "draft": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
+        "target": "meta-llama/Llama-3.2-3B-Instruct",
+        "label": "TinyLlama -> Llama-3.2-3B-Instruct",
+        "recommended_k": 2,
+        "recommended_tokens": 48,
+        "recommended_mode": "hybrid",
+    },
+}
 ```
 
 ---
 
-## Setup
+## 5. Environment Setup
 
-### 1) Create and activate a virtual environment
+### Recommended Python version
+
+Use **Python 3.10–3.12**.
+
+Python 3.13 may work for some parts, but ML package support and `torch` / `torchvision` compatibility can be inconsistent.
+
+### Create environment
 
 ```bash
-python3 -m venv .venv
+python3.11 -m venv .venv
 source .venv/bin/activate
+python -m pip install --upgrade pip
 ```
 
-### 2) Install dependencies
+### Install dependencies
+
+If your repository includes `requirements.txt`:
 
 ```bash
-pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-### 3) (Optional) Log exact environment for reproducibility
+If you need to install core dependencies manually:
 
 ```bash
-python -V
-pip freeze > outputs/results/repro_requirements_lock.txt
+pip install torch torchvision transformers streamlit matplotlib pandas numpy sentencepiece accelerate
 ```
+
+### Notes
+
+- Some Hugging Face models may require authentication or license approval.
+- `meta-llama/Llama-3.2-3B-Instruct` may require a Hugging Face login and accepted terms.
+- On limited hardware, use smaller families first (`gpt2`, `tinyllama`) before trying larger targets.
 
 ---
 
-## Quick Start
+## 6. Running the Project
 
-### Launch the dashboard
+### Launch the interactive app
 
 ```bash
-streamlit run app.py
+streamlit run specupipe/app.py
 ```
 
-In the sidebar:
-- pick model family (`gpt2`, `tinyllama`, `qwen`),
-- choose mode (`fixed`, `adaptive`, `hybrid`),
-- set speculation depth `k`,
-- run and compare baseline vs speculative results live.
+This opens the dashboard for:
 
----
+- baseline decoding,
+- speculative decoding,
+- policy selection,
+- model-family selection,
+- and live metrics display.
 
-## CLI Usage
-
-Run all commands from the `specupipe/` directory.
-
-### 1) Single baseline vs speculative run
+### Run a command-line comparison
 
 ```bash
-python experiments/run_single.py \
-  --prompt "Speculative decoding is useful because" \
-  --draft_model distilgpt2 \
-  --target_model gpt2 \
-  --max_new_tokens 50 \
-  --k 4 \
-  --device cpu
-```
-
-### 2) Compare baseline vs naive vs speculative
-
-```bash
-python experiments/compare_algorithms.py \
-  --prompt "Explain why efficient inference matters in production systems." \
-  --draft_model distilgpt2 \
-  --target_model gpt2 \
+python specupipe/experiments/compare_model_families.py \
+  --family gpt2 \
+  --question "Explain speculative decoding in simple words." \
   --max_new_tokens 32 \
   --k 3 \
   --device cpu \
   --mode hybrid
 ```
 
-### 3) Compare model families
+### Run a parameter sweep / grid experiment
 
 ```bash
-python experiments/compare_model_families.py \
+python specupipe/experiments/run_grid.py
+```
+
+This is the main entry point for reproducing performance sweeps across:
+
+- speculation depth `k`,
+- output length,
+- policy type,
+- and model-family choice.
+
+---
+
+## 7. Reproducibility Guide
+
+This section explains the exact order to follow if you want to reproduce the experiments and presentation outputs.
+
+### Step 1 — Verify the environment
+
+```bash
+python -c "import torch, transformers, streamlit, matplotlib; print('env ok')"
+```
+
+### Step 2 — Start with a lightweight family
+
+Use the smallest pair first to verify correctness and flow:
+
+- draft: `distilgpt2`
+- target: `gpt2`
+
+Why: it is faster to download, simpler to debug, and safer on limited hardware.
+
+### Step 3 — Validate correctness
+
+Run a short generation with baseline and speculative modes and confirm:
+
+- the speculative decoder only commits verified tokens,
+- mismatched suffixes are rolled back,
+- the final committed prefix remains consistent with baseline target greedy decoding.
+
+### Step 4 — Run sweeps over `k`
+
+Use a fixed prompt set and vary:
+
+- `k = 2, 3, 4, 6, 8`
+- output lengths such as `32` and `64`
+- policies such as `fixed`, `adaptive`, `hybrid`, `category-aware`
+
+### Step 5 — Export CSV or logs
+
+Store outputs in a reproducible directory such as:
+
+```text
+outputs/csv/
+outputs/logs/
+outputs/plots/
+```
+
+Recommended fields:
+
+- family
+- draft model
+- target model
+- prompt category
+- mode
+- `k`
+- acceptance rate
+- speedup
+- rollback count
+- verify bottleneck ratio
+- stall rounds
+- backpressure events
+- energy proxy
+- memory / KV overhead proxy
+
+### Step 6 — Generate figures from exported data
+
+Use the plotting scripts or notebooks described below.
+
+---
+
+## 8. Why Some Plots Are Not Included as “Measured Results”
+
+A few plots used in the presentation are **illustrative / representative trend plots**, not large-scale measured benchmark results.
+
+This was done for practical reasons:
+
+1. **Hardware limits**  
+   Running every model family and every configuration sweep locally was not always feasible on the available laptop hardware.
+
+2. **Model-access constraints**  
+   Some larger models require additional memory, longer runtime, or Hugging Face gated access.
+
+3. **Presentation clarity**  
+   A small number of figures were used to communicate expected system behavior cleanly when exhaustive benchmarking was not possible.
+
+### Important note for reproducibility
+
+The project still provides a clear path to regenerate the plots on a stronger machine or cloud environment. In other words:
+
+- the **code path is reproducible**,
+- but some presentation figures are **representative trend plots** rather than full-scale measured sweeps.
+
+If you want strict measured results only, rerun the sweep scripts on a GPU-enabled environment and replace the illustrative figures with exported CSV-based plots.
+
+---
+
+## 9. How to Generate the Plots
+
+There are two recommended ways.
+
+### Option A — Generate plots from experiment sweeps
+
+1. Run the sweep:
+
+```bash
+python specupipe/experiments/run_grid.py
+```
+
+2. Make sure it exports a CSV to something like:
+
+```text
+outputs/csv/results.csv
+```
+
+3. Run the plotting script or notebook.
+
+If you keep a dedicated plot script, a clean command is:
+
+```bash
+python specupipe/experiments/plot_results.py --input outputs/csv/results.csv --outdir outputs/plots
+```
+
+> If `plot_results.py` is not yet in the repository, add one small plotting utility to read the CSV and generate:
+> - speedup vs `k`
+> - acceptance vs `k`
+> - speedup vs acceptance rate
+> - speedup vs draft/target cost ratio
+> - energy proxy vs `k`
+
+### Option B — Generate presentation-ready illustrative plots
+
+If the repository includes a Colab notebook or local notebook, you can run the plotting cells directly to regenerate the presentation-style figures.
+
+Typical outputs:
+
+```text
+outputs/plots/speedup_vs_k.png
+outputs/plots/acceptance_vs_k.png
+outputs/plots/speedup_vs_acceptance.png
+outputs/plots/speedup_vs_cost_ratio.png
+outputs/plots/energy_per_token_proxy.png
+outputs/plots/slowdown_combined_realistic.png
+```
+
+---
+
+## 10. Recommended Plot Set
+
+For this project, the most useful plots are:
+
+1. **Speedup vs speculation depth `k`**  
+   Shows the main latency tradeoff and diminishing returns.
+
+2. **Acceptance rate vs `k`**  
+   Explains why speedup rises or falls.
+
+3. **Speedup vs acceptance rate**  
+   Shows the strongest causal relationship behind speculation efficiency.
+
+4. **Speedup vs draft/target cost ratio**  
+   Explains why a cheap draft model matters.
+
+5. **Energy-per-token proxy vs `k`**  
+   Shows that the fastest setting is not always the most efficient one.
+
+6. **Slowdown analysis plots**  
+   Useful for “Why does the run become slow?” slides:
+   - verify bottleneck,
+   - backpressure,
+   - stall rounds,
+   - wasted draft tokens.
+
+---
+
+## 11. Suggested Reproduction Commands
+
+### Baseline sanity check
+
+```bash
+python specupipe/experiments/compare_model_families.py \
   --family gpt2 \
   --question "What is speculative decoding?" \
-  --max_new_tokens 64 \
+  --max_new_tokens 32 \
+  --k 2 \
+  --device cpu \
+  --mode fixed
+```
+
+### Adaptive-depth run
+
+```bash
+python specupipe/experiments/compare_model_families.py \
+  --family smollm2 \
+  --question "Explain why speculative decoding can fail." \
+  --max_new_tokens 32 \
   --k 3 \
+  --device cpu \
+  --mode adaptive
+```
+
+### Hybrid-gating run
+
+```bash
+python specupipe/experiments/compare_model_families.py \
+  --family tinyllama \
+  --question "Describe rollback in speculative decoding." \
+  --max_new_tokens 48 \
+  --k 2 \
   --device cpu \
   --mode hybrid
 ```
 
-### 4) Run full grid experiment (main benchmark pipeline)
+### Full sweep
 
 ```bash
-python experiments/run_grid.py
+python specupipe/experiments/run_grid.py
 ```
-
-Generates:
-- `outputs/results/grid_results.csv`
-- `outputs/results/grid_results.json`
-- `outputs/results/grid_summary.csv`
-- `outputs/results/category_summary.csv`
-
-### 5) Plot benchmark results
-
-```bash
-python experiments/plot_results.py
-```
-
-Generates PNG plots in `outputs/plots/`.
-
-### 6) Export best/worst configurations
-
-```bash
-python experiments/export_best_configs.py
-```
-
-Generates:
-- `outputs/results/best_overall_configs.csv`
-- `outputs/results/worst_overall_configs.csv`
-- `outputs/results/best_by_output_length.csv`
-- `outputs/results/best_by_category.csv`
-
-### 7) Validate output correctness
-
-```bash
-python experiments/validate_correctness.py
-```
-
-Generates:
-- `outputs/results/validation_results.csv`
 
 ---
 
-## Reproducibility Guide
+## 12. Expected Findings
 
-Use this section directly in your hackathon submission to show reproducibility discipline.
+Across the project, the main expected conclusions are:
 
-### Reproducibility checklist
+- speculative decoding is **not always faster** than baseline,
+- **acceptance rate** is the most important performance indicator,
+- `k` has an **optimal middle range**,
+- very large `k` causes diminishing returns because rollback and verification overhead rise,
+- a **cheap draft model** is important,
+- adaptive and hybrid control policies improve robustness,
+- speedup alone is not enough; memory overhead and energy proxy also matter.
 
-1. **Use the same Python + dependency versions**
-   - Create a clean virtual environment.
-   - Install from `requirements.txt`.
-   - Save `pip freeze` output.
-2. **Use fixed command sequence**
-   - First run `run_grid.py`,
-   - then `plot_results.py`,
-   - then `export_best_configs.py`,
-   - then `validate_correctness.py`.
-3. **Use a consistent device**
-   - Prefer `--device cpu` for portability.
-4. **Avoid changing prompt/model sets during reproduction**
-   - Keep built-in prompt lists and depth sets unchanged.
-5. **Store artifacts**
-   - Keep all generated files in `outputs/results/` and `outputs/plots/`.
+In one sentence:
 
-### Recommended reproducible run script
+> Speculative decoding outperforms baseline only when accepted work is large enough to amortize verification, rollback, and control overhead.
+
+---
+
+## 13. Limitations
+
+- Some larger model families require more memory than a typical laptop provides.
+- Gated models may require authentication.
+- A subset of presentation figures may be trend illustrations rather than large-scale measured sweeps.
+- Energy results are proxy-based unless collected from actual device instrumentation.
+
+---
+
+## 14. Future Work
+
+- cycle-accurate architectural simulation,
+- hardware-assisted rollback,
+- explicit queue and backpressure modeling,
+- real power / energy measurement,
+- broader GPU-backed benchmark sweeps,
+- larger prompt sets and stronger draft-target hierarchies.
+
+---
+
+## 15. References / Starting Points
+
+Useful public references mentioned in the project:
+
+- Karpathy speculative decoding implementation
+- vLLM
+- Hugging Face Transformers
+- llama.cpp
+- nanoGPT
+- Apache TVM
+- PyTorch
+
+These are useful for:
+
+- control flow,
+- scheduling,
+- verification strategy,
+- memory handling,
+- runtime design.
+
+---
+
+## 16. Quick Start
+
+If you only want to see the project working quickly:
 
 ```bash
+python3.11 -m venv .venv
 source .venv/bin/activate
-python -V
-pip freeze > outputs/results/repro_requirements_lock.txt
-
-python experiments/run_grid.py
-python experiments/plot_results.py
-python experiments/export_best_configs.py
-python experiments/validate_correctness.py
+pip install -r requirements.txt
+streamlit run specupipe/app.py
 ```
 
-### Notes on variance
+Then:
 
-- GPU/MPS execution can change timing behavior; compare speedups on the same hardware class.
-- First run may include model download overhead from Hugging Face.
-- Throughput metrics are hardware-dependent; correctness (`output_match`) is the key algorithmic sanity signal.
-
----
-
-## Git Hygiene
-
-This repository ignores generated run artifacts so commits stay clean and reviewable.
-
-- Ignored on purpose:
-  - `outputs/results/*`
-  - `outputs/plots/*`
-  - `outputs/logs/*`
-  - local virtualenv/caches (`.venv/`, `.cache/`, etc.)
-- Tracked on purpose:
-  - source code under `core/`, `experiments/`, `tests/`, and `app.py`
-  - `README.md` and project configuration files
-  - output directory placeholders (`outputs/**/.gitkeep`)
-
-For reproducibility reporting, include these as attachments in your submission:
-
-- `outputs/results/repro_requirements_lock.txt` (your `pip freeze`)
-- summary artifacts such as:
-  - `outputs/results/grid_summary.csv`
-  - `outputs/results/category_summary.csv`
-  - `outputs/results/validation_results.csv`
+1. choose a small family (`gpt2`),
+2. run baseline and speculative decoding,
+3. vary `k`,
+4. compare acceptance rate and speedup,
+5. export experiments and regenerate plots.
 
 ---
 
-## Running Tests
+## 17. Reproducibility Statement
 
-```bash
-pytest -q
-```
+This repository is designed to be **functionally reproducible**:
 
-Current tests focus on:
-- speculative-vs-baseline equivalence behavior,
-- KV-cache manager transitions.
+- the decoding logic can be rerun,
+- the experiments can be reswept,
+- the plots can be regenerated,
+- and presentation figures can be replaced with measured outputs on stronger hardware.
 
----
-
-## Default Model Pairs
-
-- GPT-2 family:
-  - Draft: `distilgpt2`
-  - Target: `gpt2`
-- TinyLlama family:
-  - Draft/Target: `TinyLlama/TinyLlama-1.1B-Chat-v1.0`
-- Qwen family (dashboard):
-  - Draft/Target: `Qwen/Qwen2.5-1.5B-Instruct`
+Where presentation plots are illustrative rather than fully measured, that fact should be stated explicitly in the report or slides.
 
 ---
 
-## Hackathon Pitch (one-liner)
+## 18. License / Academic Note
 
-SpecuPipe shows how speculative decoding can reduce LLM inference latency while preserving baseline output quality through explicit verification, rollback, and measurement.
+This project is intended for educational and research use. If you use figures, ideas, or results from external work, cite the original sources properly.
 
-# Speculative-Decoding-and-Multi-Token-Pipelines
