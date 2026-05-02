@@ -24,9 +24,9 @@ In speculative decoding, a **smaller draft model** proposes a block of future to
 
 This repository studies that process from three perspectives:
 
-- **Algorithmic correctness** – only verified tokens are committed.
-- **Pipeline architecture** – draft, verify, commit, and rollback stages interact like a multi-token pipeline.
-- **Systems tradeoffs** – speedup depends on acceptance rate, draft/target cost ratio, speculative KV-cache overhead, and control-policy quality.
+- **Algorithmic correctness** — only verified tokens are committed.
+- **Pipeline architecture** — draft, verify, commit, and rollback stages interact like a multi-token pipeline.
+- **Systems tradeoffs** — speedup depends on acceptance rate, draft/target cost ratio, speculative KV-cache overhead, and control-policy quality.
 
 ---
 
@@ -161,7 +161,9 @@ Use **Python 3.10–3.12**.
 
 Python 3.13 may work for some parts, but ML package support and `torch` / `torchvision` compatibility can be inconsistent.
 
-### Create environment
+### Create and activate a virtual environment
+
+Using a virtual environment is recommended so dependencies remain isolated to this project and are **not installed globally**.
 
 ```bash
 python3.11 -m venv .venv
@@ -169,7 +171,7 @@ source .venv/bin/activate
 python -m pip install --upgrade pip
 ```
 
-### Install dependencies
+### Install dependencies inside the virtual environment
 
 If your repository includes `requirements.txt`:
 
@@ -185,6 +187,7 @@ pip install torch torchvision transformers streamlit matplotlib pandas numpy sen
 
 ### Notes
 
+- Install all packages **inside the activated virtual environment**, not system-wide.
 - Some Hugging Face models may require authentication or license approval.
 - `meta-llama/Llama-3.2-3B-Instruct` may require a Hugging Face login and accepted terms.
 - On limited hardware, use smaller families first (`gpt2`, `tinyllama`) before trying larger targets.
@@ -236,11 +239,14 @@ This is the main entry point for reproducing performance sweeps across:
 
 ## 7. Reproducibility Guide
 
-This section explains the exact order to follow if you want to reproduce the experiments and presentation outputs.
+This section explains the recommended order to follow if you want to reproduce the experiments and presentation outputs.
 
 ### Step 1 — Verify the environment
 
+Make sure your virtual environment is activated first:
+
 ```bash
+source .venv/bin/activate
 python -c "import torch, transformers, streamlit, matplotlib; print('env ok')"
 ```
 
@@ -300,9 +306,6 @@ Recommended fields:
 
 Use the plotting scripts or notebooks described below.
 
----
-
-
 ### Important note for reproducibility
 
 The project still provides a clear path to regenerate the plots on a stronger machine or cloud environment. In other words:
@@ -314,7 +317,7 @@ If you want strict measured results only, rerun the sweep scripts on a GPU-enabl
 
 ---
 
-## 9. How to Generate the Plots
+## 8. How to Generate the Plots
 
 There are two recommended ways.
 
@@ -534,7 +537,6 @@ Where presentation plots are illustrative rather than fully measured, that fact 
 
 ## 17. Authors
 
-Yanni Rohan Kommathoti
-Nikhil Peravali
-Rajiv Sai Charan Tirumalasetti
-
+- Yanni Rohan Kommathoti
+- Nikhil Peravali
+- Rajiv Sai Charan Tirumalasetti
