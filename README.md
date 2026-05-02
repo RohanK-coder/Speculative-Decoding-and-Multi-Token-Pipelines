@@ -194,90 +194,132 @@ pip install torch torchvision transformers streamlit matplotlib pandas numpy sen
 
 ---
 
-## 6. Running the Project
+## 6. Running the App, Generating Outputs, and Reproducing Plots
 
-### Launch the interactive app
+This section gives one clear workflow for launching the app, running experiments, exporting results, and generating plots.
+
+### Step 1 — Activate the virtual environment
+
+Before running anything, activate the project virtual environment:
+
+```bash
+source .venv/bin/activate
+```
+
+If you have not created it yet:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+---
+
+### Step 2 — Launch the interactive app
+
+Run the Streamlit dashboard:
 
 ```bash
 streamlit run app.py
 ```
 
-This opens the dashboard for:
+The app is the easiest way to verify that the project is working.
 
-- baseline decoding,
-- speculative decoding,
-- policy selection,
-- model-family selection,
-- and live metrics display.
+Inside the app, you can:
 
-### Run a command-line comparison
+- choose a model family,
+- compare baseline decoding and speculative decoding,
+- vary speculation depth `k`,
+- select control policies such as `fixed`, `adaptive`, or `hybrid`,
+- observe live metrics such as acceptance rate, rollback behavior, and speedup.
+
+Recommended first run:
+
+- family: `gpt2`
+- mode: `hybrid`
+- `k = 2` or `k = 3`
+- output length: `32`
+
+This lightweight setup is the best starting point for confirming that the decoding flow works correctly before running larger experiments.
+
+---
+
+### Step 3 — Validate correctness with a small command-line run
+
+After confirming the app launches, run a small command-line comparison:
 
 ```bash
 python specupipe/experiments/compare_model_families.py \
   --family gpt2 \
-  --question "Explain speculative decoding in simple words." \
+  --question "What is speculative decoding?" \
   --max_new_tokens 32 \
-  --k 3 \
+  --k 2 \
+  --device cpu \
+  --mode fixed
+```
+
+Use this step to confirm that:
+
+- the baseline path runs correctly,
+- the speculative path only commits verified tokens,
+- rejected suffixes are rolled back properly,
+- the final committed output remains consistent with target-model greedy decoding.
+
+You can also try additional runs such as:
+
+```bash
+python specupipe/experiments/compare_model_families.py \
+  --family tinyllama \
+  --question "Describe rollback in speculative decoding." \
+  --max_new_tokens 48 \
+  --k 2 \
   --device cpu \
   --mode hybrid
 ```
 
-### Run a parameter sweep / grid experiment
+and
+
+```bash
+python specupipe/experiments/compare_model_families.py \
+  --family smollm2 \
+  --question "Explain why speculative decoding can fail." \
+  --max_new_tokens 32 \
+  --k 3 \
+  --device cpu \
+  --mode adaptive
+```
+
+---
+
+### Step 4 — Run the full experiment sweep
+
+To generate reproducible performance outputs across multiple settings, run:
 
 ```bash
 python specupipe/experiments/run_grid.py
 ```
 
-This is the main entry point for reproducing performance sweeps across:
+This is the main experiment driver for sweeping parameters such as:
 
 - speculation depth `k`,
 - output length,
-- policy type,
-- and model-family choice.
+- model family,
+- control mode,
+- and prompt category.
+
+A typical sweep should vary values such as:
+
+- `k = 2, 3, 4, 6, 8`
+- output lengths like `32` and `64`
+- policies like `fixed`, `adaptive`, `hybrid`, and `category-aware`
 
 ---
 
-## 7. Reproducibility Guide
+### Step 5 — Check exported outputs
 
-This section explains the recommended order to follow if you want to reproduce the experiments and presentation outputs.
-
-### Step 1 — Verify the environment
-
-Make sure your virtual environment is activated first:
-
-```bash
-source .venv/bin/activate
-python -c "import torch, transformers, streamlit, matplotlib; print('env ok')"
-```
-
-### Step 2 — Start with a lightweight family
-
-Use the smallest pair first to verify correctness and flow:
-
-- draft: `distilgpt2`
-- target: `gpt2`
-
-Why: it is faster to download, simpler to debug, and safer on limited hardware.
-
-### Step 3 — Validate correctness
-
-Run a short generation with baseline and speculative modes and confirm:
-
-- the speculative decoder only commits verified tokens,
-- mismatched suffixes are rolled back,
-- the final committed prefix remains consistent with baseline target greedy decoding.
-
-### Step 4 — Run sweeps over `k`
-
-Use a fixed prompt set and vary:
-
-- `k = 2, 3, 4, 6, 8`
-- output lengths such as `32` and `64`
-- policies such as `fixed`, `adaptive`, `hybrid`, `category-aware`
-
-### Step 5 — Export CSV or logs
-
-Store outputs in a reproducible directory such as:
+Experiment results should be saved to output directories such as:
 
 ```text
 outputs/csv/
@@ -285,7 +327,7 @@ outputs/logs/
 outputs/plots/
 ```
 
-Recommended fields:
+Recommended exported fields include:
 
 - family
 - draft model
@@ -302,59 +344,25 @@ Recommended fields:
 - energy proxy
 - memory / KV overhead proxy
 
-### Step 6 — Generate figures from exported data
-
-Use the plotting scripts or notebooks described below.
-
-### Important note for reproducibility
-
-The project still provides a clear path to regenerate the plots on a stronger machine or cloud environment. In other words:
-
-- the **code path is reproducible**,
-- but some presentation figures are **representative trend plots** rather than full-scale measured sweeps.
-
-If you want strict measured results only, rerun the sweep scripts on a GPU-enabled environment and replace the illustrative figures with exported CSV-based plots.
-
----
-
-## 8. How to Generate the Plots
-
-There are two recommended ways.
-
-### Option A — Generate plots from experiment sweeps
-
-1. Run the sweep:
-
-```bash
-python specupipe/experiments/run_grid.py
-```
-
-2. Make sure it exports a CSV to something like:
+The most important file for plotting is typically a CSV such as:
 
 ```text
 outputs/csv/results.csv
 ```
 
-3. Run the plotting script or notebook.
+If your script writes a differently named file, use that file path in the plotting step.
 
-If you keep a dedicated plot script, a clean command is:
+---
+
+### Step 6 — Generate plots from the exported CSV
+
+After the sweep completes and the CSV has been written, generate plots with a plotting script such as:
 
 ```bash
 python specupipe/experiments/plot_results.py --input outputs/csv/results.csv --outdir outputs/plots
 ```
 
-> If `plot_results.py` is not yet in the repository, add one small plotting utility to read the CSV and generate:
-> - speedup vs `k`
-> - acceptance vs `k`
-> - speedup vs acceptance rate
-> - speedup vs draft/target cost ratio
-> - energy proxy vs `k`
-
-### Option B — Generate presentation-ready illustrative plots
-
-If the repository includes a Colab notebook or local notebook, you can run the plotting cells directly to regenerate the presentation-style figures.
-
-Typical outputs:
+This should generate figures such as:
 
 ```text
 outputs/plots/speedup_vs_k.png
@@ -365,29 +373,31 @@ outputs/plots/energy_per_token_proxy.png
 outputs/plots/slowdown_combined_realistic.png
 ```
 
+If `plot_results.py` is not yet included in the repository, add a small plotting utility that reads the exported CSV and produces the main figures.
+
 ---
 
-## 9. Recommended Plot Set
+### Step 7 — Recommended plot set
 
-For this project, the most useful plots are:
+The most useful plots for this project are:
 
 1. **Speedup vs speculation depth `k`**  
    Shows the main latency tradeoff and diminishing returns.
 
 2. **Acceptance rate vs `k`**  
-   Explains why speedup rises or falls.
+   Explains why speedup rises or falls as speculation depth changes.
 
 3. **Speedup vs acceptance rate**  
-   Shows the strongest causal relationship behind speculation efficiency.
+   Shows the strongest relationship behind speculation efficiency.
 
 4. **Speedup vs draft/target cost ratio**  
-   Explains why a cheap draft model matters.
+   Shows why a cheaper draft model is important.
 
 5. **Energy-per-token proxy vs `k`**  
    Shows that the fastest setting is not always the most efficient one.
 
 6. **Slowdown analysis plots**  
-   Useful for “Why does the run become slow?” slides:
+   Useful for understanding why performance degrades:
    - verify bottleneck,
    - backpressure,
    - stall rounds,
@@ -395,53 +405,34 @@ For this project, the most useful plots are:
 
 ---
 
-## 10. Suggested Reproduction Commands
+### Step 8 — Recommended end-to-end workflow
 
-### Baseline sanity check
+For the clearest reproduction path, use this order:
 
-```bash
-python specupipe/experiments/compare_model_families.py \
-  --family gpt2 \
-  --question "What is speculative decoding?" \
-  --max_new_tokens 32 \
-  --k 2 \
-  --device cpu \
-  --mode fixed
-```
-
-### Adaptive-depth run
-
-```bash
-python specupipe/experiments/compare_model_families.py \
-  --family smollm2 \
-  --question "Explain why speculative decoding can fail." \
-  --max_new_tokens 32 \
-  --k 3 \
-  --device cpu \
-  --mode adaptive
-```
-
-### Hybrid-gating run
-
-```bash
-python specupipe/experiments/compare_model_families.py \
-  --family tinyllama \
-  --question "Describe rollback in speculative decoding." \
-  --max_new_tokens 48 \
-  --k 2 \
-  --device cpu \
-  --mode hybrid
-```
-
-### Full sweep
-
-```bash
-python specupipe/experiments/run_grid.py
-```
+1. create and activate the virtual environment,
+2. launch the app with `streamlit run specupipe/app.py`,
+3. test a small `gpt2` baseline vs speculative run,
+4. run `compare_model_families.py` for sanity checking,
+5. run `run_grid.py` for the full sweep,
+6. confirm CSV/log output files were created,
+7. run the plotting script to generate figures in `outputs/plots/`.
 
 ---
 
-## 11. Expected Findings
+### Reproducibility note
+
+This repository is designed to be functionally reproducible:
+
+- the decoding logic can be rerun,
+- the experiments can be reswept,
+- the CSV outputs can be regenerated,
+- and the plots can be rebuilt from exported results.
+
+Some presentation figures may be illustrative trend plots rather than full measured sweeps. For strict measurement-based reporting, rerun the experiments on a stronger CPU or GPU environment and regenerate all figures directly from exported CSV data.
+
+---
+
+## 7. Expected Findings
 
 Across the project, the main expected conclusions are:
 
@@ -459,7 +450,7 @@ In one sentence:
 
 ---
 
-## 12. Limitations
+## 8. Limitations
 
 - Some larger model families require more memory than a typical laptop provides.
 - Gated models may require authentication.
@@ -468,7 +459,7 @@ In one sentence:
 
 ---
 
-## 13. Future Work
+## 9. Future Work
 
 - cycle-accurate architectural simulation,
 - hardware-assisted rollback,
@@ -479,7 +470,7 @@ In one sentence:
 
 ---
 
-## 14. References / Starting Points
+## 10. References / Starting Points
 
 Useful public references mentioned in the project:
 
@@ -501,12 +492,12 @@ These are useful for:
 
 ---
 
-## 15. Quick Start
+## 11. Quick Start
 
 If you only want to see the project working quickly:
 
 ```bash
-python3.11 -m venv .venv
+python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 streamlit run specupipe/app.py
@@ -522,7 +513,7 @@ Then:
 
 ---
 
-## 16. Reproducibility Statement
+## 12. Reproducibility Statement
 
 This repository is designed to be **functionally reproducible**:
 
@@ -535,7 +526,7 @@ Where presentation plots are illustrative rather than fully measured, that fact 
 
 ---
 
-## 17. Authors
+## 13. Authors
 
 - Yanni Rohan Kommathoti
 - Nikhil Peravali
