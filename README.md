@@ -166,7 +166,7 @@ Python 3.13 may work for some parts, but ML package support and `torch` / `torch
 Using a virtual environment is recommended so dependencies remain isolated to this project and are **not installed globally**.
 
 ```bash
-python3.11 -m venv .venv
+python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip
 ```
