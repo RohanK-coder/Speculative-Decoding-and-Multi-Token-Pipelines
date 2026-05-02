@@ -199,7 +199,7 @@ pip install torch torchvision transformers streamlit matplotlib pandas numpy sen
 ### Launch the interactive app
 
 ```bash
-streamlit run specupipe/app.py
+streamlit run app.py
 ```
 
 This opens the dashboard for:
