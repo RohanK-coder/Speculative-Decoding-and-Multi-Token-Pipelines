@@ -223,9 +223,10 @@ python -c "import torch, transformers, streamlit, matplotlib, pandas; print('env
 
 ---
 
-## 6. Running the App, Generating Outputs, and Reproducing Plots
+## 6. Reproducability Guide
 
 This section gives one clear workflow for launching the app, running experiments, exporting results, and generating plots.
+After Running Experimental Setup (Part 5) do the following steps.
 
 ### Step 1 — Activate the virtual environment
 
