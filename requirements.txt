@@ -6,4 +6,5 @@ transformers
 streamlit
 pandas
 tqdm
+torchvision
 

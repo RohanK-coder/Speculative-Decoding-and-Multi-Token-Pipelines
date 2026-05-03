@@ -13,22 +13,15 @@ from core.utils import pick_device
 
 PROMPTS = [
     {"category": "explanatory", "text": "Speculative decoding is useful because"},
-    {"category": "explanatory", "text": "The role of verification in speculative decoding is"},
-    {"category": "technical", "text": "The role of a KV cache in transformer inference is"},
     {"category": "technical", "text": "Verification becomes a bottleneck when"},
     {"category": "algorithmic", "text": "A rollback is required in speculative decoding when"},
-    {"category": "algorithmic", "text": "Adaptive speculation depth should increase when"},
-    {"category": "open_ended", "text": "Explain why efficient inference matters in production systems"},
-    {"category": "open_ended", "text": "Discuss the tradeoff between speed and correctness in LLM inference"},
 ]
 
-DEPTHS = [2, 3, 4, 6]
-OUTPUT_LENGTHS = [32, 64]
+DEPTHS = [2, 4, 6, 8]
+OUTPUT_LENGTHS = [32]
 
 SPEED_RATIO_CONFIGS = [
-    ("fast_draft", 0.7, 1.0),
     ("balanced", 1.0, 1.0),
-    ("slow_draft", 1.3, 1.0),
 ]
 
 
@@ -47,12 +40,13 @@ def main():
         ("adaptive_only", {"adaptive": True, "hybrid_gated": False, "use_category_policy": False}),
         ("hybrid_only", {"adaptive": False, "hybrid_gated": True, "use_category_policy": False}),
         ("category_only", {"adaptive": False, "hybrid_gated": False, "use_category_policy": True}),
-        ("hybrid_category", {"adaptive": True, "hybrid_gated": True, "use_category_policy": True}),
     ]
 
     rows = []
 
     total_runs = len(PROMPTS) * len(OUTPUT_LENGTHS) * len(DEPTHS) * len(mode_configs) * len(SPEED_RATIO_CONFIGS)
+    print(f"Running reduced demo sweep with {total_runs} speculative configurations.")
+
     with tqdm(total=total_runs) as pbar:
         for item in PROMPTS:
             prompt = item["text"]
