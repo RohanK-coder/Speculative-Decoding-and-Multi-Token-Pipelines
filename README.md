@@ -265,21 +265,9 @@ Use a lightweight setup first:
 
 This is the safest first run for correctness and basic performance checks.
 
-### Step 3 — Run a quick correctness check
 
-Run a small correctness-oriented script:
 
-```bash
-PYTHONPATH=. python experiments/validate_correctness.py
-```
-
-This step is useful for confirming that:
-
-- speculative decoding only commits verified tokens,
-- rejected suffixes are rolled back correctly,
-- final committed text remains consistent with the target-model decoding path.
-
-### Step 4 — Run one experiment configuration
+### Step 3 — Run one experiment configuration
 
 For a quick test that does not require a large sweep:
 
@@ -289,7 +277,7 @@ PYTHONPATH=. python experiments/run_single.py
 
 Use this when you want one reproducible example for a demo or grading walkthrough.
 
-### Step 5 — Run a comparison script
+### Step 4 — Run a comparison script
 
 You can also run a more targeted comparison:
 
@@ -305,7 +293,7 @@ PYTHONPATH=. python experiments/compare_algorithms.py
 
 These are useful for focused comparisons without running the full grid.
 
-### Step 6 — Run the grid experiment
+### Step 5 — Run the grid experiment
 
 The full grid runner is:
 
@@ -323,7 +311,7 @@ This generates structured outputs for multiple combinations of:
 
 **Important:** the default `run_grid.py` may run many combinations. For a submission or professor demo, use a reduced configuration if you want faster reproduction.
 
-### Step 7 — Check exported results
+### Step 6 — Check exported results
 
 Experiment outputs should appear under:
 
@@ -342,7 +330,7 @@ outputs/results/category_summary.csv
 outputs/results/grid_results.json
 ```
 
-### Step 8 — Generate plots
+### Step 7 — Generate plots
 
 After results are exported, generate figures with:
 
@@ -363,7 +351,7 @@ outputs/plots/energy_per_token_proxy.png
 outputs/plots/slowdown_combined_realistic.png
 ```
 
-### Step 9 — Recommended end-to-end workflow
+### Step 8 — Recommended end-to-end workflow
 
 For the cleanest reproduction path:
 
