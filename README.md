@@ -2,6 +2,16 @@
 
 A software prototype and architecture study of **speculative decoding** for large language model inference, built for **CECS 530 / Advanced Computer Architecture**.
 
+> **Reproduction note**
+>
+> This project provides two Git branches for different evaluation needs:
+>
+> - **`demo-48-run-sweep`**: a reduced configuration with **48 checks** that completes in **less than 2 minutes** on a typical local machine and still generates outputs and plots.
+> - **`main`**: the full configuration with **960 checks** that takes about **20 minutes** on a typical local machine and is intended for more complete evaluation and it generates outputs and plots.
+>
+> For quick verification, use **`demo-48-run-sweep`**. For extended experiments, use **`main`**.
+
+
 This project studies speculative decoding as more than a text-generation trick. It treats the problem as a **pipeline, control, and memory-system design problem**:
 
 - How do we break the one-token-at-a-time barrier of autoregressive decoding?
