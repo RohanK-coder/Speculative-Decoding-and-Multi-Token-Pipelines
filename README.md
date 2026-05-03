@@ -368,38 +368,9 @@ For the cleanest reproduction path:
 
 ---
 
-## 7. Fast Reproduction Path for Grading or Demo
 
-A professor or TA usually does **not** need to run a full exhaustive sweep.
 
-Recommended quick path:
-
-```bash
-source .venv/bin/activate
-PYTHONPATH=. streamlit run app.py
-```
-
-Then, in a second terminal:
-
-```bash
-source .venv/bin/activate
-PYTHONPATH=. python experiments/validate_correctness.py
-PYTHONPATH=. python experiments/run_single.py
-PYTHONPATH=. python experiments/plot_results.py
-```
-
-This path is much more practical than a very large grid search and is usually enough to demonstrate:
-
-- the project runs correctly,
-- baseline and speculative decoding are implemented,
-- speculative metrics are emitted,
-- outputs and plots can be generated.
-
-If you keep a larger sweep for your own analysis, describe it as an **extended evaluation mode**, not the default grading path.
-
----
-
-## 8. Expected Outputs and Plot Set
+## 7. Expected Outputs and Plot Set
 
 The most useful outputs and figures for this project are:
 
@@ -455,7 +426,7 @@ Recommended logged fields include:
 
 ---
 
-## 9. Suggested Commands
+## 8. Suggested Commands
 
 ### App
 
@@ -508,7 +479,7 @@ PYTHONPATH=. python experiments/plot_results.py
 
 ---
 
-## 10. Expected Findings
+## 9. Expected Findings
 
 Across the project, the main expected conclusions are:
 
@@ -526,7 +497,7 @@ In one sentence:
 
 ---
 
-## 11. Limitations
+## 10. Limitations
 
 - Some larger model families require more memory than a typical laptop provides.
 - Gated models may require authentication.
@@ -536,7 +507,7 @@ In one sentence:
 
 ---
 
-## 12. Troubleshooting
+## 11. Troubleshooting
 
 ### `ModuleNotFoundError: No module named 'core'`
 
@@ -577,7 +548,7 @@ Start with `distilgpt2` and `gpt2`. If you later use gated models, make sure you
 
 ---
 
-## 13. Reproducibility Statement
+## 12. Reproducibility Statement
 
 This repository is designed to be **functionally reproducible**:
 
@@ -590,7 +561,7 @@ For grading or demo purposes, a reduced experiment path is recommended. Larger s
 
 ---
 
-## 14. Future Work
+## 13. Future Work
 
 - cycle-accurate architectural simulation,
 - hardware-assisted rollback,
@@ -601,7 +572,7 @@ For grading or demo purposes, a reduced experiment path is recommended. Larger s
 
 ---
 
-## 15. References / Starting Points
+## 14. References / Starting Points
 
 Useful public references mentioned in the project:
 
@@ -623,7 +594,7 @@ These are useful for:
 
 ---
 
-## 16. Authors
+## 15. Authors
 
 - Yanni Rohan Kommathoti
 - Nikhil Peravali
