@@ -7,7 +7,9 @@ A software prototype and architecture study of **speculative decoding** for larg
 > This project provides two Git branches for different evaluation needs:
 >
 > - **`demo-48-run-sweep`**: a reduced configuration with **48 checks** that completes in **less than 2 minutes** on a typical local machine and still generates outputs and plots.
+> - [Go to demo-48-run-sweep Branch](https://github.com/RohanK-coder/Speculative-Decoding-and-Multi-Token-Pipelines/tree/demo-48-run-sweep)
 > - **`main`**: the full configuration with **960 checks** that takes about **20 minutes** on a typical local machine and is intended for more complete evaluation and it generates outputs and plots.
+> - [Go to main Branch](https://github.com/RohanK-coder/Speculative-Decoding-and-Multi-Token-Pipelines/tree/main)
 >
 > For quick verification, use **`demo-48-run-sweep`**. For extended experiments, use **`main`**.
 
