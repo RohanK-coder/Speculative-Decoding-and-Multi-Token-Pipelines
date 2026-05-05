@@ -454,7 +454,7 @@ For running tests :
 ```bash
 PYTHONPATH=. python -m pytest tests
 ```
-
+Use Python 3.10–3.12.
 
 ---
 
