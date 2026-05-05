@@ -1,0 +1,91 @@
+category,prompt,max_new_tokens,mode,k,output_match
+explanatory,Speculative decoding is useful because,32,fixed,2,True
+explanatory,Speculative decoding is useful because,32,adaptive,2,True
+explanatory,Speculative decoding is useful because,32,hybrid,2,True
+explanatory,Speculative decoding is useful because,32,fixed,4,True
+explanatory,Speculative decoding is useful because,32,adaptive,4,True
+explanatory,Speculative decoding is useful because,32,hybrid,4,True
+explanatory,Speculative decoding is useful because,32,fixed,8,True
+explanatory,Speculative decoding is useful because,32,adaptive,8,True
+explanatory,Speculative decoding is useful because,32,hybrid,8,True
+explanatory,Speculative decoding is useful because,64,fixed,2,True
+explanatory,Speculative decoding is useful because,64,adaptive,2,True
+explanatory,Speculative decoding is useful because,64,hybrid,2,True
+explanatory,Speculative decoding is useful because,64,fixed,4,True
+explanatory,Speculative decoding is useful because,64,adaptive,4,True
+explanatory,Speculative decoding is useful because,64,hybrid,4,True
+explanatory,Speculative decoding is useful because,64,fixed,8,True
+explanatory,Speculative decoding is useful because,64,adaptive,8,True
+explanatory,Speculative decoding is useful because,64,hybrid,8,True
+technical,The role of a KV cache in transformer inference is,32,fixed,2,True
+technical,The role of a KV cache in transformer inference is,32,adaptive,2,True
+technical,The role of a KV cache in transformer inference is,32,hybrid,2,True
+technical,The role of a KV cache in transformer inference is,32,fixed,4,True
+technical,The role of a KV cache in transformer inference is,32,adaptive,4,True
+technical,The role of a KV cache in transformer inference is,32,hybrid,4,True
+technical,The role of a KV cache in transformer inference is,32,fixed,8,True
+technical,The role of a KV cache in transformer inference is,32,adaptive,8,True
+technical,The role of a KV cache in transformer inference is,32,hybrid,8,True
+technical,The role of a KV cache in transformer inference is,64,fixed,2,True
+technical,The role of a KV cache in transformer inference is,64,adaptive,2,True
+technical,The role of a KV cache in transformer inference is,64,hybrid,2,True
+technical,The role of a KV cache in transformer inference is,64,fixed,4,True
+technical,The role of a KV cache in transformer inference is,64,adaptive,4,True
+technical,The role of a KV cache in transformer inference is,64,hybrid,4,True
+technical,The role of a KV cache in transformer inference is,64,fixed,8,True
+technical,The role of a KV cache in transformer inference is,64,adaptive,8,True
+technical,The role of a KV cache in transformer inference is,64,hybrid,8,True
+algorithmic,A rollback is required in speculative decoding when,32,fixed,2,True
+algorithmic,A rollback is required in speculative decoding when,32,adaptive,2,True
+algorithmic,A rollback is required in speculative decoding when,32,hybrid,2,True
+algorithmic,A rollback is required in speculative decoding when,32,fixed,4,True
+algorithmic,A rollback is required in speculative decoding when,32,adaptive,4,True
+algorithmic,A rollback is required in speculative decoding when,32,hybrid,4,True
+algorithmic,A rollback is required in speculative decoding when,32,fixed,8,True
+algorithmic,A rollback is required in speculative decoding when,32,adaptive,8,True
+algorithmic,A rollback is required in speculative decoding when,32,hybrid,8,True
+algorithmic,A rollback is required in speculative decoding when,64,fixed,2,True
+algorithmic,A rollback is required in speculative decoding when,64,adaptive,2,True
+algorithmic,A rollback is required in speculative decoding when,64,hybrid,2,True
+algorithmic,A rollback is required in speculative decoding when,64,fixed,4,True
+algorithmic,A rollback is required in speculative decoding when,64,adaptive,4,True
+algorithmic,A rollback is required in speculative decoding when,64,hybrid,4,True
+algorithmic,A rollback is required in speculative decoding when,64,fixed,8,True
+algorithmic,A rollback is required in speculative decoding when,64,adaptive,8,True
+algorithmic,A rollback is required in speculative decoding when,64,hybrid,8,True
+analysis,The tradeoff between verification cost and speculation depth is,32,fixed,2,True
+analysis,The tradeoff between verification cost and speculation depth is,32,adaptive,2,True
+analysis,The tradeoff between verification cost and speculation depth is,32,hybrid,2,True
+analysis,The tradeoff between verification cost and speculation depth is,32,fixed,4,True
+analysis,The tradeoff between verification cost and speculation depth is,32,adaptive,4,True
+analysis,The tradeoff between verification cost and speculation depth is,32,hybrid,4,True
+analysis,The tradeoff between verification cost and speculation depth is,32,fixed,8,True
+analysis,The tradeoff between verification cost and speculation depth is,32,adaptive,8,True
+analysis,The tradeoff between verification cost and speculation depth is,32,hybrid,8,True
+analysis,The tradeoff between verification cost and speculation depth is,64,fixed,2,True
+analysis,The tradeoff between verification cost and speculation depth is,64,adaptive,2,True
+analysis,The tradeoff between verification cost and speculation depth is,64,hybrid,2,True
+analysis,The tradeoff between verification cost and speculation depth is,64,fixed,4,True
+analysis,The tradeoff between verification cost and speculation depth is,64,adaptive,4,True
+analysis,The tradeoff between verification cost and speculation depth is,64,hybrid,4,True
+analysis,The tradeoff between verification cost and speculation depth is,64,fixed,8,True
+analysis,The tradeoff between verification cost and speculation depth is,64,adaptive,8,True
+analysis,The tradeoff between verification cost and speculation depth is,64,hybrid,8,True
+open_ended,Write a short paragraph about future AI hardware,32,fixed,2,True
+open_ended,Write a short paragraph about future AI hardware,32,adaptive,2,True
+open_ended,Write a short paragraph about future AI hardware,32,hybrid,2,True
+open_ended,Write a short paragraph about future AI hardware,32,fixed,4,True
+open_ended,Write a short paragraph about future AI hardware,32,adaptive,4,True
+open_ended,Write a short paragraph about future AI hardware,32,hybrid,4,True
+open_ended,Write a short paragraph about future AI hardware,32,fixed,8,True
+open_ended,Write a short paragraph about future AI hardware,32,adaptive,8,True
+open_ended,Write a short paragraph about future AI hardware,32,hybrid,8,True
+open_ended,Write a short paragraph about future AI hardware,64,fixed,2,True
+open_ended,Write a short paragraph about future AI hardware,64,adaptive,2,True
+open_ended,Write a short paragraph about future AI hardware,64,hybrid,2,True
+open_ended,Write a short paragraph about future AI hardware,64,fixed,4,True
+open_ended,Write a short paragraph about future AI hardware,64,adaptive,4,True
+open_ended,Write a short paragraph about future AI hardware,64,hybrid,4,True
+open_ended,Write a short paragraph about future AI hardware,64,fixed,8,True
+open_ended,Write a short paragraph about future AI hardware,64,adaptive,8,True
+open_ended,Write a short paragraph about future AI hardware,64,hybrid,8,True
