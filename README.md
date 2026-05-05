@@ -26,6 +26,32 @@ For quick verification, use **`demo-48-run-sweep`**. For extended experiments, u
 
 ---
 
+## Quick Start
+
+Use this path first when checking the project locally.
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+PYTHONPATH=. python experiments/run_single.py
+PYTHONPATH=. pytest -q
+```
+
+On Windows PowerShell:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+$env:PYTHONPATH="."
+
+python experiments\run_single.py
+pytest -q
+```
+
 ## 1. Project Summary
 
 In baseline autoregressive decoding, the target model generates **one token at a time**. This creates a sequential dependency chain where latency scales directly with output length and target-model cost.
@@ -146,7 +172,7 @@ Speculative-Decoding-and-Multi-Token-Pipelines/
   Generated figures for the report, slides, and grading review.
 
 - `outputs/logs/`  
-  Optional run logs.
+  Run logs included when available. New logs may also be produced by future experiment reruns.
 
 - `tests/`  
   Unit and correctness tests for important decoding behavior.
@@ -304,16 +330,6 @@ Launch the Streamlit dashboard from the project root:
 PYTHONPATH=. streamlit run app.py
 ```
 
-The app is the easiest way to confirm the project is working.
-
-Inside the app, you can:
-
-- choose a model family,
-- compare baseline decoding and speculative decoding,
-- vary speculation depth `k`,
-- select policies such as `fixed`, `adaptive`, or `hybrid`,
-- observe metrics such as acceptance rate, rollback behavior, wasted draft work, and speedup.
-
 ### Recommended first app run
 
 Use a lightweight setup first:
@@ -328,15 +344,9 @@ device: cpu
 
 This is the safest first run for correctness and basic performance checks.
 
-### Step 4 — Run the correctness check
 
-```bash
-PYTHONPATH=. python experiments/validate_correctness.py
-```
 
-This verifies that the speculative decoder commits only validated tokens and handles rollback behavior correctly.
-
-### Step 5 — Run one experiment configuration
+### Step 4 — Run one experiment configuration
 
 For a quick test that does not require a large sweep:
 
@@ -346,7 +356,7 @@ PYTHONPATH=. python experiments/run_single.py
 
 Use this when you want one reproducible example for a demo or grading walkthrough.
 
-### Step 6 — Run comparison scripts
+### Step 5 — Run comparison scripts
 
 Model-family comparison:
 
@@ -362,7 +372,7 @@ PYTHONPATH=. python experiments/compare_algorithms.py
 
 These are useful for focused comparisons without running the full grid.
 
-### Step 7 — Run the grid experiment
+### Step 6 — Run the grid experiment
 
 ```bash
 PYTHONPATH=. python experiments/run_grid.py
@@ -379,7 +389,7 @@ This generates structured outputs for multiple combinations of:
 
 The `demo-48-run-sweep` branch runs a reduced grid for quick reproduction. The `main` branch runs the full grid.
 
-### Step 8 — Check exported results
+### Step 7 — Inspect / Check exported results
 
 Experiment outputs are stored under:
 
@@ -398,9 +408,9 @@ outputs/results/category_summary.csv
 outputs/results/grid_results.json
 ```
 
-These generated outputs are included in the repository so the results can be reviewed directly and regenerated using the scripts above.
+These files allow reviewers to inspect the completed experiment results directly. Rerunning the scripts above will reproduce or update the committed artifacts.
 
-### Step 9 — Generate plots
+### Step 8 — Generate plots
 
 After results are exported, generate figures with:
 
@@ -419,7 +429,7 @@ outputs/plots/energy_per_token_proxy.png
 outputs/plots/slowdown_combined_realistic.png
 ```
 
-### Step 10 — Recommended end-to-end workflow
+### Step 9 — Recommended end-to-end workflow
 
 For the cleanest reproduction path:
 
@@ -428,23 +438,33 @@ python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip
 pip install -r requirements.txt
-PYTHONPATH=. python experiments/validate_correctness.py
 PYTHONPATH=. python experiments/run_single.py
 PYTHONPATH=. python experiments/run_grid.py
 PYTHONPATH=. python experiments/plot_results.py
 ```
 
-For a faster grading workflow, use the `demo-48-run-sweep` branch before running the commands above.
+For a faster workflow, use the `demo-48-run-sweep` branch before running the commands above.
 
 ---
 
-## 7. Expected Outputs and Plot Set
+### Step 10 — Running Tests
+
+For running tests : 
+
+```bash
+PYTHONPATH=. python -m pytest tests
+```
+
+
+---
+
+## 7. Included / Expected Outputs and Plot Set
 
 The repository includes generated output files and plots so that the results can be inspected without rerunning every experiment.
 
 ### CSV / JSON outputs
 
-Recommended logged fields include:
+The generated CSV / JSON outputs include fields such as:
 
 - prompt,
 - category,
@@ -468,7 +488,7 @@ Recommended logged fields include:
 - KV-cache overhead proxy,
 - output match.
 
-### Recommended plots
+### Recommended / Included Plot Set
 
 1. **Speedup vs speculation depth `k`**  
    Shows latency tradeoffs and diminishing returns.
@@ -561,19 +581,31 @@ In one sentence:
 
 ---
 
-## 10. Limitations
+## 10. Results Summary
+The table below summarizes representative committed results from the generated outputs.
+
+
+| Setup | Mode | k | Max Tokens | Acceptance Rate | Speedup | Rollbacks | Wasted Draft Tokens |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| distilgpt2 -> gpt2 | fixed | 2 | 32 | 0.5897 | 1.4 | 9 | 4 |
+| distilgpt2 -> gpt2 | adaptive | 3 | 32 | 0.6 | 2.1 | 1 | 5 |
+| distilgpt2 -> gpt2 | hybrid | 3 | 32 | 0.4117 | 3.6 | 2 | 9 |
+
+
+
+---
+
+## 11. Limitations
 
 - Some larger model families require more memory than a typical laptop provides.
 - Gated models may require Hugging Face authentication and accepted license terms.
 - CPU-only runs are supported but may be slower for larger sweeps.
-- A subset of presentation figures may be trend illustrations rather than large-scale measured sweeps.
-- Energy results are proxy-based unless collected from actual device instrumentation.
 - The full grid experiment can be time-consuming on CPU-only systems.
-- Exact package versions are not pinned in this submission, but the project is designed to run inside a local virtual environment using `requirements.txt`.
+
 
 ---
 
-## 11. Troubleshooting
+## 12. Troubleshooting
 
 ### `ModuleNotFoundError: No module named 'core'`
 
@@ -641,7 +673,7 @@ outputs/results/
 
 ---
 
-## 12. Reproducibility Statement
+## 13. Reproducibility Statement
 
 This repository is designed to be **functionally reproducible**:
 
@@ -668,7 +700,7 @@ The reduced branch is intended for quick verification. The full branch is intend
 
 ---
 
-## 13. Future Work
+## 14. Future Work
 
 Possible extensions include:
 
@@ -683,18 +715,25 @@ Possible extensions include:
 
 ---
 
-## 14. References / Starting Points
+## 15. References / Starting Points
 
 Useful public references and systems related to this project include:
 
-- speculative decoding papers and implementations,
-- Karpathy speculative decoding examples,
-- Hugging Face Transformers,
-- vLLM,
-- llama.cpp,
-- nanoGPT,
-- Apache TVM,
-- PyTorch.
+- [1] A. Vaswani et al., “Attention Is All You Need,” in Proc. NeurIPS, 2017.
+- [2] N. Shazeer, “Fast Transformer Decoding: One Write-Head Is All You
+Need,” arXiv:1911.02150, 2019.
+- [3] M. Stern, N. Shazeer, and J. Uszkoreit, “Blockwise Parallel Decoding for
+Deep Autoregressive Models,” in Proc. NeurIPS, 2018.
+- [4] Y. Leviathan, M. Kalman, and Y. Matias, “Fast Inference from Transformers via Speculative Decoding,” in Proc. ICML, 2023.
+- [5] C. Chen et al., “Accelerating Large Language Model Decoding with
+Speculative Sampling,” arXiv:2302.01318, 2023.
+- [6] X. Miao et al., “SpecInfer: Accelerating Generative Large Language
+Model Serving with Tree-based Speculative Inference and Verification,”
+in Proc. ASPLOS, 2024.
+- [7] J. Zhang et al., “Draft & Verify: Lossless Large Language Model
+Acceleration via Self-Speculative Decoding,” in Proc. ACL, 2024.
+- [8] T. Cai et al., “MEDUSA: Simple LLM Inference Acceleration Framework
+with Multiple Decoding Heads,” in Proc. ICML, 2024.
 
 These references are useful for understanding:
 
@@ -708,7 +747,7 @@ These references are useful for understanding:
 
 ---
 
-## 15. Authors
+## 16. Authors
 
 - Yanni Rohan Kommathoti
 - Nikhil Peravali
