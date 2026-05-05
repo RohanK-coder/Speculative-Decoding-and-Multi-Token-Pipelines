@@ -590,7 +590,6 @@ In one sentence:
 
 ## 10. Results Summary
 
-Replace the sample values below with your actual measured results from `outputs/results/`.
 
 | Setup | Mode | k | Max Tokens | Acceptance Rate | Speedup | Rollbacks | Wasted Draft Tokens |
 |---|---:|---:|---:|---:|---:|---:|---:|
@@ -735,14 +734,21 @@ Possible extensions include:
 
 Useful public references and systems related to this project include:
 
-- speculative decoding papers and implementations,
-- Karpathy speculative decoding examples,
-- Hugging Face Transformers,
-- vLLM,
-- llama.cpp,
-- nanoGPT,
-- Apache TVM,
-- PyTorch.
+- [1] A. Vaswani et al., “Attention Is All You Need,” in Proc. NeurIPS, 2017.
+- [2] N. Shazeer, “Fast Transformer Decoding: One Write-Head Is All You
+Need,” arXiv:1911.02150, 2019.
+- [3] M. Stern, N. Shazeer, and J. Uszkoreit, “Blockwise Parallel Decoding for
+Deep Autoregressive Models,” in Proc. NeurIPS, 2018.
+- [4] Y. Leviathan, M. Kalman, and Y. Matias, “Fast Inference from Transformers via Speculative Decoding,” in Proc. ICML, 2023.
+- [5] C. Chen et al., “Accelerating Large Language Model Decoding with
+Speculative Sampling,” arXiv:2302.01318, 2023.
+- [6] X. Miao et al., “SpecInfer: Accelerating Generative Large Language
+Model Serving with Tree-based Speculative Inference and Verification,”
+in Proc. ASPLOS, 2024.
+- [7] J. Zhang et al., “Draft & Verify: Lossless Large Language Model
+Acceleration via Self-Speculative Decoding,” in Proc. ACL, 2024.
+- [8] T. Cai et al., “MEDUSA: Simple LLM Inference Acceleration Framework
+with Multiple Decoding Heads,” in Proc. ICML, 2024.
 
 These references are useful for understanding:
 
