@@ -465,6 +465,17 @@ For a faster grading workflow, use the `demo-48-run-sweep` branch before running
 
 ---
 
+### Step 11 — Running Tests
+
+For running tests : 
+
+```bash
+PYTHONPATH=. python -m pytest tests
+```
+
+
+---
+
 ## 7. Included / Expected Outputs and Plot Set
 
 The repository includes generated output files and plots so that the results can be inspected without rerunning every experiment.
