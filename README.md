@@ -331,16 +331,6 @@ Launch the Streamlit dashboard from the project root:
 PYTHONPATH=. streamlit run app.py
 ```
 
-The app is the easiest way to confirm the project is working.
-
-Inside the app, you can:
-
-- choose a model family,
-- compare baseline decoding and speculative decoding,
-- vary speculation depth `k`,
-- select policies such as `fixed`, `adaptive`, or `hybrid`,
-- observe metrics such as acceptance rate, rollback behavior, wasted draft work, and speedup.
-
 ### Recommended first app run
 
 Use a lightweight setup first:
@@ -355,15 +345,9 @@ device: cpu
 
 This is the safest first run for correctness and basic performance checks.
 
-### Step 4 — Run the correctness check
 
-```bash
-PYTHONPATH=. python experiments/validate_correctness.py
-```
 
-This verifies that the speculative decoder commits only validated tokens and handles rollback behavior correctly.
-
-### Step 5 — Run one experiment configuration
+### Step 4 — Run one experiment configuration
 
 For a quick test that does not require a large sweep:
 
@@ -373,7 +357,7 @@ PYTHONPATH=. python experiments/run_single.py
 
 Use this when you want one reproducible example for a demo or grading walkthrough.
 
-### Step 6 — Run comparison scripts
+### Step 5 — Run comparison scripts
 
 Model-family comparison:
 
@@ -455,13 +439,12 @@ python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip
 pip install -r requirements.txt
-PYTHONPATH=. python experiments/validate_correctness.py
 PYTHONPATH=. python experiments/run_single.py
 PYTHONPATH=. python experiments/run_grid.py
 PYTHONPATH=. python experiments/plot_results.py
 ```
 
-For a faster grading workflow, use the `demo-48-run-sweep` branch before running the commands above.
+For a faster workflow, use the `demo-48-run-sweep` branch before running the commands above.
 
 ---
 
