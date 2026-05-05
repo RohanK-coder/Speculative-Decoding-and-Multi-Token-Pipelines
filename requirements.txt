@@ -1,10 +1,23 @@
-pytest
-numpy
-matplotlib
-torch
-transformers
-streamlit
-pandas
-tqdm
-torchvision
+# Core runtime
+# Recommended with Python 3.10-3.12.
+# For CUDA-specific torch wheels, install PyTorch from https://pytorch.org/get-started/locally/
+# first, then install the remaining packages from this file.
+torch==2.5.1
+torchvision==0.20.1
+transformers==4.46.3
+accelerate==1.1.1
+safetensors==0.4.5
+huggingface-hub==0.26.2
+tokenizers==0.20.3
 
+# Data, metrics, and plotting
+numpy==1.26.4
+pandas==2.2.3
+matplotlib==3.9.2
+tqdm==4.67.0
+
+# App
+streamlit==1.40.1
+
+# Testing
+pytest==8.3.3

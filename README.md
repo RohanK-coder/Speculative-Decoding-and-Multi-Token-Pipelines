@@ -2,7 +2,7 @@
 
 A software prototype and architecture study of **speculative decoding** for large language model inference, built for **CECS 530 / Advanced Computer Architecture**.
 
-This project studies speculative decoding as more than a text-generation optimization. It treats the problem as a **pipeline, control, and memory-system design problem**: draft generation, target verification, token commit, rollback, backpressure, and KV-cache management are modeled as interacting stages of a multi-token inference pipeline.
+This project treats speculative decoding as a **pipeline, control, and memory-system design problem**, not only as a text-generation trick. It studies draft generation, target verification, token commit, rollback, backpressure, and KV-cache management as interacting stages of a multi-token inference pipeline.
 
 ---
 
@@ -10,21 +10,46 @@ This project studies speculative decoding as more than a text-generation optimiz
 
 This repository provides two Git branches for different evaluation needs:
 
-- **`demo-48-run-sweep`**  
-  A reduced configuration with **48 checks** that completes in **less than 2 minutes** on a typical local machine. This branch is recommended for quick grading, demo walkthroughs, and reproducibility verification.
+- **`demo-48-run-sweep`**: reduced configuration for quick grading, demo walkthroughs, and reproducibility checks.
+- **`main`**: full configuration for broader experimental analysis.
 
-  [Go to `demo-48-run-sweep` branch](https://github.com/RohanK-coder/Speculative-Decoding-and-Multi-Token-Pipelines/tree/demo-48-run-sweep)
+Recommended workflow:
 
-- **`main`**  
-  The full configuration with **960 checks** that takes about **20 minutes** on a typical local machine. This branch is intended for more complete evaluation and broader experimental analysis.
-
-  [Go to `main` branch](https://github.com/RohanK-coder/Speculative-Decoding-and-Multi-Token-Pipelines/tree/main)
-
-Both branches include generated outputs and plots so that results can be inspected directly and regenerated from the experiment scripts.
-
-For quick verification, use **`demo-48-run-sweep`**. For extended experiments, use **`main`**.
+- Use **`demo-48-run-sweep`** for quick verification.
+- Use **`main`** for extended experiments and report-level analysis.
 
 ---
+
+## Quick Start
+
+Use this path first when checking the project locally.
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+PYTHONPATH=. python experiments/validate_correctness.py
+PYTHONPATH=. python experiments/run_single.py
+PYTHONPATH=. pytest -q
+```
+
+On Windows PowerShell:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+$env:PYTHONPATH="."
+python experiments\validate_correctness.py
+python experiments\run_single.py
+pytest -q
+```
+
+---
+
+
 
 ## 1. Project Summary
 
@@ -40,55 +65,56 @@ In speculative decoding, a **smaller draft model** proposes a block of future to
 
 This repository studies that process from three perspectives:
 
-- **Algorithmic correctness** — only verified tokens are committed.
-- **Pipeline architecture** — draft, verify, commit, and rollback stages interact like a multi-token pipeline.
-- **Systems tradeoffs** — speedup depends on acceptance rate, draft/target cost ratio, speculation depth, verification cost, rollback overhead, and KV-cache behavior.
+- **Algorithmic correctness**: only verified tokens are committed.
+- **Pipeline architecture**: draft, verify, commit, rollback, and fallback behave like a multi-stage pipeline.
+- **Systems tradeoffs**: speedup depends on acceptance rate, draft/target cost ratio, speculation depth, verification cost, rollback overhead, and KV-cache behavior.
 
-Key architecture questions explored in this project include:
+Key questions explored:
 
-- How can speculative decoding break the one-token-at-a-time bottleneck of autoregressive generation?
+- How can speculative decoding reduce the one-token-at-a-time bottleneck of autoregressive generation?
 - When does speculation outperform baseline decoding?
-- How do acceptance rate, speculation depth, verification cost, rollback, backpressure, and KV-cache management affect end-to-end speed?
-- How can adaptive and hybrid control policies make speculative decoding more robust across different prompts and model families?
+- How do acceptance rate, speculation depth, rollback, verification cost, backpressure, and KV-cache overhead affect speed?
+- Can adaptive or hybrid control policies make speculative decoding more robust across prompts and model families?
 
 ---
 
-## 2. Main Contributions
+## 2. What Is Original in This Project?
 
-This project includes:
+This project is inspired by published speculative decoding work, but the implementation and evaluation framework are project-specific.
 
-- a **baseline greedy decoder** for reference,
-- a **speculative decoder** with configurable speculation depth `k`,
-- **rollback-safe state handling**,
-- **KV-cache consistency modeling**,
-- multiple control policies:
-  - fixed,
-  - adaptive,
-  - hybrid-gated,
-  - category-aware,
-- a **Streamlit web app** for interactive runs,
-- experiment scripts for single runs, comparisons, and grid sweeps,
-- generated CSV/JSON result files,
-- generated plots for report and presentation use,
-- analytical and empirical views of:
-  - speedup,
-  - acceptance rate,
-  - verification bottlenecks,
-  - stall rounds,
-  - backpressure,
-  - wasted draft work,
-  - energy proxy,
-  - memory and KV-cache overhead.
+Project-specific contributions include:
+
+- a clean baseline greedy decoder for comparison,
+- a configurable speculative decoder with speculation depth `k`,
+- rollback-safe state handling,
+- KV-cache consistency modeling,
+- adaptive speculation-depth control,
+- hybrid-gated fallback behavior,
+- category-aware policy settings,
+- architecture-style metrics for backpressure, stalls, wasted draft work, and KV-cache overhead proxies,
+- experiment scripts for single runs, comparisons, grid sweeps, and plot generation,
+- a Streamlit dashboard for interactive inspection.
+
+The strongest technical idea in this project is the **adaptive multi-token speculative pipeline**: the system does not treat speculation depth as a fixed constant only, but studies how control policy changes affect acceptance, rollback, and speedup.
 
 ---
 
 ## 3. Repository Layout
 
-The root-level project structure is:
-
 ```text
 Speculative-Decoding-and-Multi-Token-Pipelines/
 ├── core/
+│   ├── analysis.py
+│   ├── baseline.py
+│   ├── cache.py
+│   ├── config.py
+│   ├── metrics.py
+│   ├── models.py
+│   ├── naive_multitoken.py
+│   ├── prompting.py
+│   ├── speculative.py
+│   ├── streaming_decode.py
+│   └── utils.py
 ├── experiments/
 │   ├── compare_algorithms.py
 │   ├── compare_model_families.py
@@ -102,60 +128,18 @@ Speculative-Decoding-and-Multi-Token-Pipelines/
 │   ├── plots/
 │   └── results/
 ├── tests/
-├── .gitignore
 ├── app.py
 ├── README.md
 └── requirements.txt
 ```
 
-> Note: A local `.venv/` directory may exist on the developer machine, but it is intentionally ignored by Git and should be recreated locally by each user.
-
-### Important files and directories
-
-- `app.py`  
-  Streamlit interface for baseline vs speculative decoding, live metrics, and interactive demos.
-
-- `core/`  
-  Core model wrappers, baseline decoding, speculative decoding, analysis helpers, metrics, and utilities.
-
-- `experiments/run_single.py`  
-  Runs one experiment configuration for quick testing.
-
-- `experiments/validate_correctness.py`  
-  Validates that speculative decoding only commits verified tokens and handles rollback correctly.
-
-- `experiments/run_grid.py`  
-  Batch experiment runner for parameter sweeps.
-
-- `experiments/compare_model_families.py`  
-  Compares multiple model families under similar decoding settings.
-
-- `experiments/compare_algorithms.py`  
-  Compares baseline and speculative approaches.
-
-- `experiments/export_best_configs.py`  
-  Exports best-performing configurations from generated results.
-
-- `experiments/plot_results.py`  
-  Generates plots from exported CSV results.
-
-- `outputs/results/`  
-  CSV and JSON experiment outputs. These files are included so results can be inspected directly and regenerated.
-
-- `outputs/plots/`  
-  Generated figures for the report, slides, and grading review.
-
-- `outputs/logs/`  
-  Optional run logs.
-
-- `tests/`  
-  Unit and correctness tests for important decoding behavior.
+> A local `.venv/` directory may exist on the developer machine, but it should be ignored by Git and recreated locally by each user.
 
 ---
 
 ## 4. Supported Model Families
 
-The project was designed around small draft/target configurations so that the main workflows can run on local machines.
+The project is designed around small draft/target configurations so that basic workflows can run on local machines.
 
 ```python
 MODEL_FAMILIES = {
@@ -191,52 +175,29 @@ MODEL_FAMILIES = {
         "recommended_tokens": 32,
         "recommended_mode": "hybrid",
     },
-    "llama32": {
-        "draft": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
-        "target": "meta-llama/Llama-3.2-3B-Instruct",
-        "label": "TinyLlama -> Llama-3.2-3B-Instruct",
-        "recommended_k": 2,
-        "recommended_tokens": 48,
-        "recommended_mode": "hybrid",
-    },
 }
 ```
 
 On limited hardware, start with **`distilgpt2 -> gpt2`**.
 
-Some larger or gated models may require additional memory, Hugging Face authentication, or license approval.
+Some larger or gated models may require more memory, Hugging Face authentication, or license approval.
 
 ---
 
 ## 5. Environment Setup
 
-### Recommended Python version
+### Recommended Python Version
 
-Use **Python 3.10–3.12**.
+Use **Python 3.10-3.12**.
 
-Python 3.13 may work for some parts, but ML package support and `torch` / `torchvision` compatibility can be inconsistent.
+Python 3.13 may work for some parts, but ML package compatibility can be inconsistent.
 
 ### Create and activate a virtual environment
-
-Create a local virtual environment so dependencies are isolated from system-level Python packages:
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip
-```
-
-On Windows PowerShell, use:
-
-```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-```
-
-### Install dependencies
-
-```bash
 pip install -r requirements.txt
 ```
 
@@ -246,77 +207,36 @@ pip install -r requirements.txt
 python -c "import torch, transformers, streamlit, matplotlib, pandas; print('env ok')"
 ```
 
-### Environment notes
+### Notes
 
-- Run all commands from the **project root**, the folder that contains `app.py`, `core/`, `experiments/`, and `requirements.txt`.
-- Activate `.venv` before running the app or experiments.
+- Run commands from the project root.
 - Use `PYTHONPATH=.` when running scripts from the command line.
-- Some Hugging Face models may require authentication or license approval.
-- `meta-llama/Llama-3.2-3B-Instruct` may require a Hugging Face login and accepted terms.
-- On limited hardware, use the `gpt2` family first.
+- Use the `gpt2` family first on CPU-only machines.
+- For CUDA-specific PyTorch wheels, install PyTorch using the official PyTorch selector before installing the rest of the packages.
 
 ---
 
 ## 6. Reproducibility Guide
 
-This section gives a complete workflow for launching the app, running experiments, exporting results, and regenerating plots.
-
-The repository is designed to be **functionally reproducible**. The experiment outputs and plots are included in both branches, and the scripts can regenerate those artifacts from the repository root.
-
-### Step 1 — Choose a branch
-
-For quick verification:
+### Correctness check
 
 ```bash
-git checkout demo-48-run-sweep
+PYTHONPATH=. python experiments/validate_correctness.py
 ```
 
-For the full experiment configuration:
+### Single run
 
 ```bash
-git checkout main
+PYTHONPATH=. python experiments/run_single.py
 ```
 
-Use `demo-48-run-sweep` for fast grading checks and `main` for the complete sweep.
-
-### Step 2 — Activate the virtual environment
-
-Before running anything:
-
-```bash
-source .venv/bin/activate
-```
-
-If the virtual environment does not exist yet, create it first:
-
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install --upgrade pip
-pip install -r requirements.txt
-```
-
-### Step 3 — Run the app
-
-Launch the Streamlit dashboard from the project root:
+### Streamlit app
 
 ```bash
 PYTHONPATH=. streamlit run app.py
 ```
 
-The app is the easiest way to confirm the project is working.
-
-Inside the app, you can:
-
-- choose a model family,
-- compare baseline decoding and speculative decoding,
-- vary speculation depth `k`,
-- select policies such as `fixed`, `adaptive`, or `hybrid`,
-- observe metrics such as acceptance rate, rollback behavior, wasted draft work, and speedup.
-
-### Recommended first app run
-
-Use a lightweight setup first:
+Recommended first app configuration:
 
 ```text
 family: gpt2
@@ -326,62 +246,56 @@ max new tokens: 32
 device: cpu
 ```
 
-This is the safest first run for correctness and basic performance checks.
-
-### Step 4 — Run the correctness check
-
-```bash
-PYTHONPATH=. python experiments/validate_correctness.py
-```
-
-This verifies that the speculative decoder commits only validated tokens and handles rollback behavior correctly.
-
-### Step 5 — Run one experiment configuration
-
-For a quick test that does not require a large sweep:
-
-```bash
-PYTHONPATH=. python experiments/run_single.py
-```
-
-Use this when you want one reproducible example for a demo or grading walkthrough.
-
-### Step 6 — Run comparison scripts
-
-Model-family comparison:
+### Model-family comparison
 
 ```bash
 PYTHONPATH=. python experiments/compare_model_families.py
 ```
 
-Algorithm comparison:
+### Algorithm comparison
 
 ```bash
 PYTHONPATH=. python experiments/compare_algorithms.py
 ```
 
-These are useful for focused comparisons without running the full grid.
-
-### Step 7 — Run the grid experiment
+### Grid sweep
 
 ```bash
 PYTHONPATH=. python experiments/run_grid.py
 ```
 
-This generates structured outputs for multiple combinations of:
+### Plot generation
 
-- prompts,
-- prompt categories,
-- speculation depth `k`,
-- output length,
-- policy mode,
-- and speed-ratio cases.
+```bash
+PYTHONPATH=. python experiments/plot_results.py
+```
 
-The `demo-48-run-sweep` branch runs a reduced grid for quick reproduction. The `main` branch runs the full grid.
+---
 
-### Step 8 — Check exported results
+## 7. Testing
 
-Experiment outputs are stored under:
+Run all tests:
+
+```bash
+PYTHONPATH=. pytest -q
+```
+
+Recommended test coverage:
+
+- cache commit, rollback, discard, and checkpoint behavior,
+- metric aggregation and derived ratios,
+- speculative accept-all behavior,
+- speculative rollback and corrective-token behavior,
+- hybrid fallback behavior after low acceptance,
+- configuration defaults.
+
+The lightweight mock-based tests should run without downloading Hugging Face models. The model-equivalence test may download `distilgpt2` and `gpt2`, so it can be kept as an integration test.
+
+---
+
+## 8. Expected Outputs
+
+Experiment outputs should be written under:
 
 ```text
 outputs/results/
@@ -389,7 +303,7 @@ outputs/plots/
 outputs/logs/
 ```
 
-Typical result files include:
+Recommended result files:
 
 ```text
 outputs/results/grid_results.csv
@@ -398,17 +312,7 @@ outputs/results/category_summary.csv
 outputs/results/grid_results.json
 ```
 
-These generated outputs are included in the repository so the results can be reviewed directly and regenerated using the scripts above.
-
-### Step 9 — Generate plots
-
-After results are exported, generate figures with:
-
-```bash
-PYTHONPATH=. python experiments/plot_results.py
-```
-
-Typical plot outputs include:
+Recommended plot files:
 
 ```text
 outputs/plots/speedup_vs_k.png
@@ -419,140 +323,41 @@ outputs/plots/energy_per_token_proxy.png
 outputs/plots/slowdown_combined_realistic.png
 ```
 
-### Step 10 — Recommended end-to-end workflow
-
-For the cleanest reproduction path:
-
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install --upgrade pip
-pip install -r requirements.txt
-PYTHONPATH=. python experiments/validate_correctness.py
-PYTHONPATH=. python experiments/run_single.py
-PYTHONPATH=. python experiments/run_grid.py
-PYTHONPATH=. python experiments/plot_results.py
-```
-
-For a faster grading workflow, use the `demo-48-run-sweep` branch before running the commands above.
+If these files are included in the repository, the README should show one small results table and link to the generated plots.
 
 ---
 
-## 7. Expected Outputs and Plot Set
+## 9. Results Summary
 
-The repository includes generated output files and plots so that the results can be inspected without rerunning every experiment.
+Replace the sample values below with your actual measured results from `outputs/results/`.
 
-### CSV / JSON outputs
+| Setup | Mode | k | Max Tokens | Acceptance Rate | Speedup | Rollbacks | Wasted Draft Tokens |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| distilgpt2 -> gpt2 | fixed | 2 | 32 | TBD | TBD | TBD | TBD |
+| distilgpt2 -> gpt2 | adaptive | 3 | 32 | TBD | TBD | TBD | TBD |
+| distilgpt2 -> gpt2 | hybrid | 3 | 32 | TBD | TBD | TBD | TBD |
 
-Recommended logged fields include:
+Suggested figures to include in the report and README:
 
-- prompt,
-- category,
-- max new tokens,
-- mode,
-- `k`,
-- acceptance rate,
-- speedup,
-- rollback count,
-- baseline fallback steps,
-- wasted draft tokens,
-- draft time,
-- verify time,
-- commit time,
-- rollback penalty,
-- pipeline utilization,
-- stall rounds,
-- backpressure events,
-- verify bottleneck ratio,
-- energy proxy,
-- KV-cache overhead proxy,
-- output match.
-
-### Recommended plots
-
-1. **Speedup vs speculation depth `k`**  
-   Shows latency tradeoffs and diminishing returns.
-
-2. **Acceptance rate vs `k`**  
-   Shows how deeper speculation affects accepted work.
-
-3. **Speedup vs acceptance rate**  
-   Shows the strongest causal relationship behind speculation efficiency.
-
-4. **Speedup vs draft/target cost ratio**  
-   Shows why a cheap draft model matters.
-
-5. **Energy-per-token proxy vs `k`**  
-   Shows that the fastest setting is not always the most efficient one.
-
-6. **Slowdown analysis plots**  
-   Diagnose verification bottlenecks, backpressure, stall rounds, and wasted draft tokens.
+1. **Speedup vs speculation depth `k`**
+2. **Acceptance rate vs `k`**
+3. **Speedup vs acceptance rate**
+4. **Speedup vs draft/target cost ratio**
+5. **Energy-per-token proxy vs `k`**
+6. **Rollback count or wasted draft tokens vs `k`**
 
 ---
 
-## 8. Suggested Commands
+## 10. Expected Findings
 
-### App
-
-```bash
-source .venv/bin/activate
-PYTHONPATH=. streamlit run app.py
-```
-
-### Correctness check
-
-```bash
-source .venv/bin/activate
-PYTHONPATH=. python experiments/validate_correctness.py
-```
-
-### Single run
-
-```bash
-source .venv/bin/activate
-PYTHONPATH=. python experiments/run_single.py
-```
-
-### Model-family comparison
-
-```bash
-source .venv/bin/activate
-PYTHONPATH=. python experiments/compare_model_families.py
-```
-
-### Algorithm comparison
-
-```bash
-source .venv/bin/activate
-PYTHONPATH=. python experiments/compare_algorithms.py
-```
-
-### Grid sweep
-
-```bash
-source .venv/bin/activate
-PYTHONPATH=. python experiments/run_grid.py
-```
-
-### Plot generation
-
-```bash
-source .venv/bin/activate
-PYTHONPATH=. python experiments/plot_results.py
-```
-
----
-
-## 9. Expected Findings
-
-Across the project, the main expected conclusions are:
+The expected conclusions are:
 
 - speculative decoding is **not always faster** than baseline,
-- **acceptance rate** is the most important performance indicator,
-- speculation depth `k` has an **optimal middle range**,
+- acceptance rate is the most important performance indicator,
+- speculation depth `k` has an optimal middle range,
 - very large `k` can cause diminishing returns because rollback and verification overhead increase,
-- a **cheap draft model** is important for useful speedup,
-- adaptive and hybrid control policies improve robustness,
+- a cheap draft model is important for useful speedup,
+- adaptive and hybrid policies can improve robustness,
 - speedup alone is not enough; memory overhead and energy proxy should also be considered.
 
 In one sentence:
@@ -561,19 +366,18 @@ In one sentence:
 
 ---
 
-## 10. Limitations
+## 11. Limitations
 
 - Some larger model families require more memory than a typical laptop provides.
 - Gated models may require Hugging Face authentication and accepted license terms.
 - CPU-only runs are supported but may be slower for larger sweeps.
-- A subset of presentation figures may be trend illustrations rather than large-scale measured sweeps.
 - Energy results are proxy-based unless collected from actual device instrumentation.
 - The full grid experiment can be time-consuming on CPU-only systems.
-- Exact package versions are not pinned in this submission, but the project is designed to run inside a local virtual environment using `requirements.txt`.
+- Results depend heavily on model pair, prompt category, and speculation depth.
 
 ---
 
-## 11. Troubleshooting
+## 12. Troubleshooting
 
 ### `ModuleNotFoundError: No module named 'core'`
 
@@ -583,41 +387,9 @@ Run scripts from the project root with `PYTHONPATH=.`, for example:
 PYTHONPATH=. python experiments/run_grid.py
 ```
 
-### `python3.11: command not found`
-
-Use the Python version installed on your system:
-
-```bash
-python3 --version
-python3 -m venv .venv
-```
-
-### `.venv/bin/activate: no such file or directory`
-
-The virtual environment has not been created yet. Run:
-
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-```
-
-### `python: command not found`
-
-Activate the virtual environment first:
-
-```bash
-source .venv/bin/activate
-```
-
-Then check:
-
-```bash
-python --version
-```
-
 ### Hugging Face model download or authentication issues
 
-Start with `distilgpt2` and `gpt2`. If you later use gated models, make sure your Hugging Face login and accepted terms are configured.
+Start with `distilgpt2` and `gpt2`. If using gated models, confirm Hugging Face login and accepted terms.
 
 ### Plot script cannot find result files
 
@@ -633,42 +405,24 @@ Then regenerate plots:
 PYTHONPATH=. python experiments/plot_results.py
 ```
 
-Also confirm that result files exist under:
+---
 
-```text
-outputs/results/
-```
+## 13. Reproducibility Checklist
+
+- [ ] Python 3.10-3.12 used
+- [ ] virtual environment created
+- [ ] pinned dependencies installed from `requirements.txt`
+- [ ] correctness check passes
+- [ ] `pytest -q` passes
+- [ ] single-run experiment completes
+- [ ] grid results are exported
+- [ ] plots are regenerated
+- [ ] README results table is updated with real values
+- [ ] sample CSV and plot files are committed if required by the course
 
 ---
 
-## 12. Reproducibility Statement
-
-This repository is designed to be **functionally reproducible**:
-
-- the decoding logic can be rerun,
-- correctness checks can be repeated,
-- the experiments can be reswept,
-- the generated outputs are included,
-- the plots are included,
-- and the figures can be rebuilt from exported CSV data.
-
-For grading or demo purposes, use the reduced branch:
-
-```bash
-git checkout demo-48-run-sweep
-```
-
-For complete evaluation, use:
-
-```bash
-git checkout main
-```
-
-The reduced branch is intended for quick verification. The full branch is intended for broader analysis.
-
----
-
-## 13. Future Work
+## 14. Future Work
 
 Possible extensions include:
 
@@ -683,32 +437,23 @@ Possible extensions include:
 
 ---
 
-## 14. References / Starting Points
+## 15. References / Starting Points
 
-Useful public references and systems related to this project include:
+Useful references and systems:
 
-- speculative decoding papers and implementations,
-- Karpathy speculative decoding examples,
-- Hugging Face Transformers,
-- vLLM,
-- llama.cpp,
-- nanoGPT,
-- Apache TVM,
-- PyTorch.
-
-These references are useful for understanding:
-
-- decoding control flow,
-- verification strategy,
-- scheduling,
-- rollback behavior,
-- memory handling,
-- runtime design,
-- and inference-system tradeoffs.
+- Fast Inference from Transformers via Speculative Decoding
+- Accelerating Large Language Model Decoding with Speculative Sampling
+- Blockwise Parallel Decoding for Deep Autoregressive Models
+- Medusa: Simple LLM Inference Acceleration Framework with Multiple Decoding Heads
+- Better & Faster Large Language Models via Multi-token Prediction
+- Hugging Face Transformers
+- vLLM
+- llama.cpp
+- PyTorch
 
 ---
 
-## 15. Authors
+## 16. Authors
 
 - Yanni Rohan Kommathoti
 - Nikhil Peravali
