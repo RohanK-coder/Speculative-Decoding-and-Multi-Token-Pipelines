@@ -35,7 +35,6 @@ python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip
 pip install -r requirements.txt
-PYTHONPATH=. python experiments/validate_correctness.py
 PYTHONPATH=. python experiments/run_single.py
 PYTHONPATH=. pytest -q
 ```
@@ -48,7 +47,7 @@ python -m venv .venv
 python -m pip install --upgrade pip
 pip install -r requirements.txt
 $env:PYTHONPATH="."
-python experiments\validate_correctness.py
+
 python experiments\run_single.py
 pytest -q
 ```
@@ -352,7 +351,7 @@ This is the safest first run for correctness and basic performance checks.
 For a quick test that does not require a large sweep:
 
 ```bash
-PYTHONPATH=. python experiments/run_single.py
+PYTHONPATH=. python experiments/run_single.py --prompt "The future of computer architecture is"
 ```
 
 Use this when you want one reproducible example for a demo or grading walkthrough.
@@ -362,18 +361,18 @@ Use this when you want one reproducible example for a demo or grading walkthroug
 Model-family comparison:
 
 ```bash
-PYTHONPATH=. python experiments/compare_model_families.py
+PYTHONPATH=. python experiments/compare_model_families.py --family gpt2 --question "What is speculative decoding?" --max_new_tokens 32 --k 3 --device cpu --mode hybrid
 ```
 
 Algorithm comparison:
 
 ```bash
-PYTHONPATH=. python experiments/compare_algorithms.py
+PYTHONPATH=. python experiments/compare_algorithms.py --prompt "What is speculative decoding?" --max_new_tokens 32 --k 3 --device cpu --mode hybrid
 ```
 
 These are useful for focused comparisons without running the full grid.
 
-### Step 7 — Run the grid experiment
+### Step 6 — Run the grid experiment
 
 ```bash
 PYTHONPATH=. python experiments/run_grid.py
@@ -390,7 +389,7 @@ This generates structured outputs for multiple combinations of:
 
 The `demo-48-run-sweep` branch runs a reduced grid for quick reproduction. The `main` branch runs the full grid.
 
-### Step 8 — Inspect / Check exported results
+### Step 7 — Inspect / Check exported results
 
 Experiment outputs are stored under:
 
@@ -411,7 +410,7 @@ outputs/results/grid_results.json
 
 These files allow reviewers to inspect the completed experiment results directly. Rerunning the scripts above will reproduce or update the committed artifacts.
 
-### Step 9 — Generate plots
+### Step 8 — Generate plots
 
 After results are exported, generate figures with:
 
@@ -430,7 +429,7 @@ outputs/plots/energy_per_token_proxy.png
 outputs/plots/slowdown_combined_realistic.png
 ```
 
-### Step 10 — Recommended end-to-end workflow
+### Step 9 — Recommended end-to-end workflow
 
 For the cleanest reproduction path:
 
@@ -448,7 +447,7 @@ For a faster workflow, use the `demo-48-run-sweep` branch before running the com
 
 ---
 
-### Step 11 — Running Tests
+### Step 10 — Running Tests
 
 For running tests : 
 
