@@ -351,7 +351,7 @@ This is the safest first run for correctness and basic performance checks.
 For a quick test that does not require a large sweep:
 
 ```bash
-PYTHONPATH=. python experiments/run_single.py
+PYTHONPATH=. python experiments/run_single.py --prompt "The future of computer architecture is"
 ```
 
 Use this when you want one reproducible example for a demo or grading walkthrough.
@@ -361,13 +361,13 @@ Use this when you want one reproducible example for a demo or grading walkthroug
 Model-family comparison:
 
 ```bash
-PYTHONPATH=. python experiments/compare_model_families.py
+PYTHONPATH=. python experiments/compare_model_families.py --family gpt2 --question "What is speculative decoding?" --max_new_tokens 32 --k 3 --device cpu --mode hybrid
 ```
 
 Algorithm comparison:
 
 ```bash
-PYTHONPATH=. python experiments/compare_algorithms.py
+PYTHONPATH=. python experiments/compare_algorithms.py --prompt "What is speculative decoding?" --max_new_tokens 32 --k 3 --device cpu --mode hybrid
 ```
 
 These are useful for focused comparisons without running the full grid.
