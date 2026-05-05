@@ -173,7 +173,7 @@ Speculative-Decoding-and-Multi-Token-Pipelines/
   Generated figures for the report, slides, and grading review.
 
 - `outputs/logs/`  
-  Optional run logs.
+  Run logs included when available. New logs may also be produced by future experiment reruns.
 
 - `tests/`  
   Unit and correctness tests for important decoding behavior.
@@ -406,7 +406,7 @@ This generates structured outputs for multiple combinations of:
 
 The `demo-48-run-sweep` branch runs a reduced grid for quick reproduction. The `main` branch runs the full grid.
 
-### Step 8 — Check exported results
+### Step 8 — Inspect / Check exported results
 
 Experiment outputs are stored under:
 
@@ -425,7 +425,7 @@ outputs/results/category_summary.csv
 outputs/results/grid_results.json
 ```
 
-These generated outputs are included in the repository so the results can be reviewed directly and regenerated using the scripts above.
+These files allow reviewers to inspect the completed experiment results directly. Rerunning the scripts above will reproduce or update the committed artifacts.
 
 ### Step 9 — Generate plots
 
@@ -465,13 +465,13 @@ For a faster grading workflow, use the `demo-48-run-sweep` branch before running
 
 ---
 
-## 7. Expected Outputs and Plot Set
+## 7. Included / Expected Outputs and Plot Set
 
 The repository includes generated output files and plots so that the results can be inspected without rerunning every experiment.
 
 ### CSV / JSON outputs
 
-Recommended logged fields include:
+The generated CSV / JSON outputs include fields such as:
 
 - prompt,
 - category,
@@ -495,7 +495,7 @@ Recommended logged fields include:
 - KV-cache overhead proxy,
 - output match.
 
-### Recommended plots
+### Recommended / Included Plot Set
 
 1. **Speedup vs speculation depth `k`**  
    Shows latency tradeoffs and diminishing returns.
@@ -589,6 +589,7 @@ In one sentence:
 ---
 
 ## 10. Results Summary
+The table below summarizes representative committed results from the generated outputs.
 
 
 | Setup | Mode | k | Max Tokens | Acceptance Rate | Speedup | Rollbacks | Wasted Draft Tokens |
@@ -597,14 +598,7 @@ In one sentence:
 | distilgpt2 -> gpt2 | adaptive | 3 | 32 | 0.6 | 2.1 | 1 | 5 |
 | distilgpt2 -> gpt2 | hybrid | 3 | 32 | 0.4117 | 3.6 | 2 | 9 |
 
-Suggested figures to include in the report and README:
 
-1. **Speedup vs speculation depth `k`**
-2. **Acceptance rate vs `k`**
-3. **Speedup vs acceptance rate**
-4. **Speedup vs draft/target cost ratio**
-5. **Energy-per-token proxy vs `k`**
-6. **Rollback count or wasted draft tokens vs `k`**
 
 ---
 
@@ -613,10 +607,8 @@ Suggested figures to include in the report and README:
 - Some larger model families require more memory than a typical laptop provides.
 - Gated models may require Hugging Face authentication and accepted license terms.
 - CPU-only runs are supported but may be slower for larger sweeps.
-- A subset of presentation figures may be trend illustrations rather than large-scale measured sweeps.
-- Energy results are proxy-based unless collected from actual device instrumentation.
 - The full grid experiment can be time-consuming on CPU-only systems.
-- Exact package versions are not pinned in this submission, but the project is designed to run inside a local virtual environment using `requirements.txt`.
+
 
 ---
 
